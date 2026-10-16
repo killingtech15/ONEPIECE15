@@ -1,0 +1,37 @@
+{
+  "islands": [
+    {
+      "id": "alabasta",
+      "name": "Alabasta",
+      "meshUrl": "/models/alabasta-baked.glb",
+      "splineProgress": 0.0,
+      "cameraZoomOffset": { "x": 32, "y": 28, "z": 42 },
+      "incidents": [
+        {
+          "title": "A kingdom finds its voice",
+          "episodes": "121–126",
+          "localPosition": { "x": 6, "y": 20, "z": -9 },
+          "description": "Above Alubarna, Vivi fights to make her people hear her. Beneath the city, Luffy faces Crocodile. When the rain finally returns, the fighting falls silent."
+        },
+        {
+          "title": "The wings that carried hope",
+          "episodes": "124–125",
+          "localPosition": { "x": -1, "y": 16.5, "z": 3 },
+          "description": "The clock tower hides a cannon aimed at the crowded square. Vivi reaches it, but the shell is still counting down. Pell carries it high above the city."
+        },
+        {
+          "title": "Behind the golden façade",
+          "episodes": "105–110",
+          "localPosition": { "x": -24, "y": 10.5, "z": -4 },
+          "description": "In the oasis city of Rainbase, Crocodile's casino conceals the machinery of a rebellion. The crew's search for answers becomes a trap beneath Rain Dinners."
+        },
+        {
+          "title": "An answer without words",
+          "episodes": "129",
+          "localPosition": { "x": 14, "y": 5.5, "z": 29 },
+          "description": "Vivi stays with the kingdom she loves. As the Going Merry sails away, the crew raises their marked arms: a quiet promise that distance cannot undo."
+        }
+      ]
+    }
+  ]
+}
