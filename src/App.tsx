@@ -12,7 +12,8 @@ import { useProgress } from '@react-three/drei'
 import Lenis from 'lenis'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import Scene from './Scene'
+import Scene, { MarkerButtons } from './Scene'
+import WorldMap from './WorldMap'
 import { island, places, travel } from './world'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -123,8 +124,23 @@ export default function App() {
   const [reduced, setReduced] = useState(
     () => matchMedia('(prefers-reduced-motion: reduce)').matches,
   )
-  const [quality, setQuality] = useState(true)
-  const [dialog, setDialog] = useState<'atlas' | 'settings' | 'notes' | null>(null)
+  const [quality, setQuality] = useState(false)
+  const [worldOpen, setWorldOpen] = useState(false)
+  const worldReturnFocus = useRef<HTMLElement | null>(null)
+  const openWorld = useCallback(() => {
+    worldReturnFocus.current =
+      document.activeElement instanceof HTMLButtonElement
+        ? document.activeElement
+        : document.querySelector('.merry-marker')
+    setWorldOpen(true)
+  }, [])
+  const closeWorld = useCallback(() => {
+    setWorldOpen(false)
+    requestAnimationFrame(() => worldReturnFocus.current?.focus({ preventScroll: true }))
+  }, [])
+  const [markerLayer, setMarkerLayer] = useState<HTMLDivElement | null>(null)
+  const dock = useRef<HTMLElement>(null)
+  const [dialog, setDialog] = useState<'settings' | 'notes' | null>(null)
   const [departed, setDeparted] = useState(false)
   const lenis = useRef<Lenis | null>(null)
   const root = useRef<HTMLDivElement>(null)
@@ -143,7 +159,7 @@ export default function App() {
     requestAnimationFrame(() => returnFocus.current?.focus({ preventScroll: true }))
   }, [])
   useEffect(() => {
-    const smooth = new Lenis({ lerp: reduced ? 1 : 0.075, smoothWheel: !reduced })
+    const smooth = new Lenis({ lerp: reduced ? 1 : 0.14, smoothWheel: !reduced })
     lenis.current = smooth
     smooth.on('scroll', (e: Lenis) => {
       travel.velocity = e.velocity
@@ -156,7 +172,7 @@ export default function App() {
         trigger: '.scroll-track',
         start: 'top top',
         end: 'bottom bottom',
-        scrub: reduced ? true : 1,
+        scrub: reduced ? true : 0.35,
         onUpdate: (self) => {
           root.current?.style.setProperty('--journey', String(self.progress))
           setDeparted(self.progress > 0.16)
@@ -176,23 +192,30 @@ export default function App() {
     }
   }, [reduced])
   useEffect(() => {
-    if (selected !== null || dialog !== null || !ready) lenis.current?.stop()
+    if (selected !== null || dialog !== null || worldOpen || !ready) lenis.current?.stop()
     else lenis.current?.start()
     if (selected !== null) detailHeading.current?.focus({ preventScroll: true })
-  }, [selected, dialog, ready, reduced])
+  }, [selected, dialog, worldOpen, ready, reduced])
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && selected !== null && !dialog) closeDetail()
+      if (e.key === 'Escape' && selected !== null && !dialog && !worldOpen) closeDetail()
     }
     window.addEventListener('keydown', key)
     return () => window.removeEventListener('keydown', key)
-  }, [selected, dialog, closeDetail])
+  }, [selected, dialog, worldOpen, closeDetail])
   useEffect(() => {
     if (dialog) modal.current?.showModal()
     else modal.current?.close()
   }, [dialog])
+  useEffect(() => {
+    const observer = new ResizeObserver(([entry]) => {
+      root.current?.style.setProperty('--dock-height', `${entry.borderBoxSize[0].blockSize}px`)
+    })
+    if (dock.current) observer.observe(dock.current)
+    return () => observer.disconnect()
+  }, [])
   const go = () =>
-    lenis.current?.scrollTo(window.innerHeight * 1.05, { duration: reduced ? 0 : 2.5 })
+    lenis.current?.scrollTo(window.innerHeight * 1.05, { duration: reduced ? 0 : 1.4 })
   const reset = () => {
     setSelected(null)
     lenis.current?.start()
@@ -210,8 +233,9 @@ export default function App() {
       <div className="scene" aria-label="Interactive 3D diorama of Alabasta">
         <SceneBoundary onError={onReady}>
           <Canvas
-            dpr={quality ? [1, 1.5] : 1}
-            gl={{ antialias: false, alpha: false, powerPreference: 'high-performance' }}
+            frameloop={worldOpen ? 'never' : 'always'}
+            dpr={quality ? [1, 1.25] : 1}
+            gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
           >
             <Suspense fallback={null}>
               <Scene
@@ -223,10 +247,21 @@ export default function App() {
                 onSelect={onSelect}
                 onHover={setHover}
                 onReady={onReady}
+                markerLayer={markerLayer}
+                onWorldMap={openWorld}
               />
             </Suspense>
           </Canvas>
         </SceneBoundary>
+      </div>
+      <div ref={setMarkerLayer} className="marker-layer" aria-label="Island map markers">
+        <MarkerButtons
+          selected={selected}
+          hover={hover}
+          onSelect={onSelect}
+          onHover={setHover}
+          onWorldMap={openWorld}
+        />
       </div>
       <div className="paper-wash" aria-hidden="true" />
       <header className="masthead">
@@ -241,7 +276,7 @@ export default function App() {
           </span>
         </button>
         <nav aria-label="Main navigation">
-          <button className="nav-link" onClick={() => setDialog('atlas')}>
+          <button className="nav-link" onClick={openWorld}>
             <Icon name="map" />
             The atlas
           </button>
@@ -297,7 +332,7 @@ export default function App() {
             </div>
           </>
         ) : (
-          <section className="story" aria-labelledby="story-title">
+          <section className="story" aria-labelledby="story-title" data-lenis-prevent>
             <button className="back-button" onClick={closeDetail}>
               <Icon name="arrow" />
               Return to the journey <kbd>ESC</kbd>
@@ -317,7 +352,8 @@ export default function App() {
               target="_blank"
               rel="noreferrer"
             >
-              EPISODE {island.incidents[selected].episodes}
+              {selected === 7 ? '' : 'EPISODE '}
+              {island.incidents[selected].episodes}
               <span>Official episode notes ↗</span>
             </a>
             {selected === 0 && (
@@ -354,18 +390,25 @@ export default function App() {
             <Icon name={rain ? 'rain' : 'sun'} />
             <span>{rain ? 'The rain returns' : 'Desert sun'}</span>
           </button>
+          <button className="merry-departure" onClick={openWorld}>
+            <Icon name="map" />
+            <span>
+              Set sail on the Going Merry<small>OPEN THE WORLD MAP</small>
+            </span>
+            <Icon name="arrow" />
+          </button>
           <span className="scroll-hint">
             <span className="mouse" />
             SCROLL TO TRAVEL
           </span>
         </div>
       </main>
-      <footer className="island-dock" id="landmarks" tabIndex={-1}>
+      <footer ref={dock} className="island-dock" id="landmarks" tabIndex={-1}>
         <div className="dock-heading">
           <span className="eyebrow">EXPLORE ALABASTA</span>
-          <span>Four places. One unforgettable journey.</span>
+          <span>Eight landmarks. Follow the coast, then head inland.</span>
         </div>
-        <nav className="landmark-list" aria-label="Island landmarks">
+        <nav className="landmark-list" aria-label="Island landmarks" data-lenis-prevent>
           {places.map((place, i) => (
             <button
               key={place.name}
@@ -400,6 +443,7 @@ export default function App() {
         Designed for desktop. Open on a larger screen for the full journey.
       </div>
       <Loading ready={ready} />
+      {worldOpen && <WorldMap onClose={closeWorld} />}
       <dialog
         ref={modal}
         className="atlas-dialog"
@@ -416,62 +460,6 @@ export default function App() {
           >
             <Icon name="close" />
           </button>
-          {dialog === 'atlas' && (
-            <>
-              <span className="eyebrow">THE GRAND LINE ATLAS</span>
-              <h2>One island at a time.</h2>
-              <p>Our first stop is Alabasta. The wider pre-timeskip world will grow from here.</p>
-              <svg
-                className="mini-map"
-                viewBox="0 0 540 290"
-                role="img"
-                aria-label="Schematic Alabasta landmark map, not canonical distances"
-              >
-                <path
-                  d="M78 150Q45 67 160 39Q257 5 410 44Q510 80 486 175Q459 265 309 266Q179 285 92 227Z"
-                  fill="#e0c9a0"
-                  stroke="#bda57c"
-                />
-                <path
-                  d="M142 116Q231 175 325 88Q292 171 281 198Q330 222 389 233"
-                  fill="none"
-                  stroke="#a56b48"
-                  strokeDasharray="4 5"
-                />
-                {[
-                  [325, 88],
-                  [281, 198],
-                  [142, 116],
-                  [389, 233],
-                ].map(([x, y], i) => (
-                  <g key={i}>
-                    <circle cx={x} cy={y} r="12" fill="#1d4a50" />
-                    <text x={x} y={y + 4} textAnchor="middle" fill="#fff" fontSize="11">
-                      {i + 1}
-                    </text>
-                  </g>
-                ))}
-                <text x="316" y="59">
-                  ALUBARNA
-                </text>
-                <text x="104" y="91">
-                  RAINBASE
-                </text>
-                <text x="390" y="269">
-                  COAST
-                </text>
-              </svg>
-              <span className="map-caption">ILLUSTRATED DIORAMA · DISTANCES COMPRESSED</span>
-              <div className="map-links">
-                {places.map((p, i) => (
-                  <button key={p.name} onClick={() => onSelect(i)}>
-                    0{i + 1} · {p.name}
-                    <Icon name="arrow" />
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
           {dialog === 'settings' && (
             <>
               <span className="eyebrow">MAKE YOURSELF AT HOME</span>
@@ -488,7 +476,8 @@ export default function App() {
               </label>
               <label className="setting">
                 <span>
-                  High visual quality<small>Sharper rendering and a brighter Log Pose.</small>
+                  High visual quality
+                  <small>Extra reflections and bloom. Balanced rendering is the default.</small>
                 </span>
                 <input
                   type="checkbox"
@@ -515,8 +504,8 @@ export default function App() {
                 distances are illustrative.
               </p>
               <p>
-                Story summaries are linked to the official episode notes. One Piece and its
-                characters belong to their respective rights holders.
+                Story summaries link to official episode notes and location references. One Piece
+                and its characters belong to their respective rights holders.
               </p>
               <div className="credits">
                 <a

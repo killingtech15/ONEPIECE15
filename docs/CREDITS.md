@@ -17,6 +17,15 @@ One Piece and its characters are the work of Eiichiro Oda and belong to their re
 
 The narrative descriptions are original short summaries, not copied episode text.
 
+## Expanded island and world chart
+
+- [Official episode 93](https://one-piece.com/anime/93/index.html): arrival and supplies at Nanohana. The Going Merry is placed at the arrival waterfront; the farewell is a separate Sandora River stop.
+- [Official episode 103](https://one-piece.com/anime/103/index.html): the crew reaches drought-stricken Yuba.
+- [Sandora River](https://onepiece.fandom.com/wiki/Sandora_River), [Erumalu](https://onepiece.fandom.com/wiki/Erumalu), [Katorea](https://onepiece.fandom.com/wiki/Katorea): secondary references for the inland route, ruined oasis and rebel relocation.
+- [Red Line](https://onepiece.fandom.com/wiki/Red_Line), [Grand Line](https://onepiece.fandom.com/wiki/Grand_Line), [Calm Belt](https://onepiece.fandom.com/wiki/Calm_Belt): secondary world-geography references. Each selectable chart location also links to its individual reference.
+
+The SVG world chart, coast outlines, symbols and route artwork are original code-native assets. No third-party fan map is copied or shipped. It is explicitly an unfolded route schematic, not an assertion of canonical coordinates, distances or island shapes. Alabasta is the only implemented 3D island; the other 24 places have informational entries.
+
 ## Environment
 
 [Potsdamer Platz HDRI](https://polyhaven.com/a/potsdamer_platz), Poly Haven, CC0. Distributed locally as `public/environment/city.hdr`, sourced from the [Drei asset mirror](https://github.com/pmndrs/drei-assets/tree/master/hdri). Used for the Log Pose's environment reflections.

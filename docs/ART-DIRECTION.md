@@ -8,8 +8,12 @@ An illustrated atlas opening into a three-dimensional landscape. Pale limestone 
 
 Alubarna: elevated rocky plateau, long entrance staircase, dense domed town, monumental royal terrace with mint pilasters and rose panels, central three gold domes, clock tower. Rainbase and the coast use a compressed diorama layout, not asserted canonical coordinates. Original modeled geometry based on references, not extracted game assets or AI-generated images.
 
+The expanded island adds Nanohana's waterfront market, Yuba's dry well and buried houses, Erumalu's ruined walls, Katorea's settlement and a carved Sandora channel. The Going Merry at the arrival pier opens a large original SVG route chart. This chart uses the world's major geographic divisions and 25 pre-timeskip destinations with illustrative positions. Other island scenes are explicitly marked as future work.
+
 ## Motion
 Scroll moves the camera along a curved arrival route. Hovering the palace raises its pennants; hovering the clock rotates a falcon silhouette; hovering Rainbase stirs a sand spiral; hovering the coast turns the ship toward its route. Clicks pause scroll and move to a landmark. Escape/return restores the exact journey position. A rain toggle marks the end of the drought. Reduced-motion mode removes travel animation, wind motion and distortion.
+
+Nanohana now controls the ship's hover motion; Yuba and Erumalu stir dust. Landmark markers remain visible through buildings to prevent repeated occlusion flicker. They keep a 44px target and project in the same frame as the camera. Readability takes priority over reducing typography to fit additional navigation items: the eight-stop dock scrolls horizontally.
 
 ## Reference sources
 - [Alubarna anime still, hosted by Sportskeeda](https://staticg.sportskeeda.com/editor/2023/12/bacc4-17040164674071-1920.jpg): primary visual reference; not shipped as site artwork.

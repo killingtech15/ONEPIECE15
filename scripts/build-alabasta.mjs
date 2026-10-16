@@ -81,7 +81,11 @@ function dome(x, y, z, r, c) {
     [0.16, 1.5],
     [0, 1.68],
   ].map(([a, b]) => new T.Vector2(a * r, b * r))
-  add(new T.LatheGeometry(pts, 24), c, [x, y, z])
+  add(new T.LatheGeometry(new T.SplineCurve(pts).getPoints(r < 1 ? 10 : 18), r < 1 ? 24 : 32), c, [
+    x,
+    y,
+    z,
+  ])
   cyl([x, y + 0.06, z], r * 1.01, r * 1.01, 0.15, 'goldShade')
   cyl([x, y + r * 1.83, z], 0.025, 0.06, r * 0.42, 'gold', 8)
   sphere([x, y + r * 1.7, z], [0.09, 0.09, 0.09], 'gold')
@@ -124,8 +128,8 @@ function palms(x, z, y = 2, scale = 1) {
 }
 
 // Broad coastline and sculpted dunes. Rings converge beneath the waterline.
-const ring = 112,
-  radial = 18,
+const ring = 160,
+  radial = 48,
   vertices = [],
   uv = [],
   indices = []
@@ -139,6 +143,10 @@ for (let j = 0; j <= radial; j++)
     let y = 1.65 + Math.sin(x * 0.19 + z * 0.12) * 0.45 + Math.sin(z * 0.28 - x * 0.08) * 0.35
     y += Math.pow(Math.max(0, Math.sin(x * 0.14 + z * 0.19)), 3) * 1.3
     y = y * (1 - Math.pow(t, 12)) - 0.85 * Math.pow(t, 16)
+    // A real channel below sea level avoids overlapping water/land surfaces.
+    const riverX = 28 - 0.22 * (z + 5) + Math.sin(z * 0.16) * 2
+    if (z > -19)
+      y = T.MathUtils.lerp(-0.65, y, T.MathUtils.smoothstep(Math.abs(x - riverX), 1.1, 3))
     vertices.push(x, y, z)
     uv.push(i / ring, j / radial)
     if (j < radial && i < ring) {
@@ -313,11 +321,56 @@ for (let i = 0; i < 22; i++) {
   if (x < -17 && z < 5) continue
   palms(x, z, 1.85, 0.65 + rand() * 0.5)
 }
+// Yuba: a dry well, wind-worn tower and houses partly swallowed by the dunes.
+add(new T.TorusGeometry(1.1, 0.3, 8, 32), 'ochre', [-22, 2.2, 12], [Math.PI / 2, 0, 0])
+cyl([-22, 2.03, 12], 0.9, 0.9, 0.06, 'rockDark')
+cyl([-24, 3.8, 10], 0.65, 1.05, 5.2, 'ochre')
+dome(-24, 6.4, 10, 0.7, 'cream')
+for (let i = 0; i < 10; i++) {
+  const a = i * 2.399,
+    x = -22 + Math.cos(a) * (2.4 + i * 0.15),
+    z = 12 + Math.sin(a) * 3.4
+  box([x, 2.4, z], [1.4, 1.6, 1.5], i % 2 ? 'ochre' : 'cream')
+  arch(x, 1.85, z + 0.77, 0.5, 0.85, 'rockDark')
+}
+box([-20.8, 3, 12], [0.12, 1.8, 0.12], 'wood')
+box([-23.2, 3, 12], [0.12, 1.8, 0.12], 'wood')
+box([-22, 3.9, 12], [2.6, 0.12, 0.12], 'wood')
+// Erumalu: a deserted settlement, broken colonnade and remnants of an oasis.
+for (let i = 0; i < 8; i++) {
+  const x = 16 + (i % 4) * 1.65,
+    z = 19 + Math.floor(i / 4) * 2.6
+  box([x, 2.45, z], [1.2, 1.7 + (i % 3) * 0.4, 0.3], 'cream', [0, (i % 2) * 0.12, 0])
+  box([x - 0.5, 2.05, z + 0.6], [0.3, 1, 1.4], 'ochre')
+}
+for (let i = 0; i < 4; i++) cyl([16 + i * 1.6, 2.6, 23], 0.22, 0.3, 1.5 + (i % 2), 'chalk')
+box([18, 1.8, 21], [0.2, 2.6, 0.2], 'wood', [0, 0, 0.22])
+// Katorea: the rebel base on the eastern side of the river.
+// Relative positions here are illustrative, not a geographic claim.
+for (let i = 0; i < 12; i++) {
+  const x = 32 + (i % 4) * 1.25,
+    z = -12 + Math.floor(i / 4) * 1.8
+  box([x, 2.4, z], [1.25, 1.9, 1.4], i % 3 ? 'chalk' : 'cream')
+  box([x, 3.42, z], [1.4, 0.15, 1.55], 'rose')
+  arch(x, 1.7, z + 0.72, 0.42, 0.9, 'dark')
+}
+for (const x of [33, 35.5]) {
+  box([x, 2.5, -6.5], [2.3, 0.08, 1.8], 'cream', [0.16, 0, 0])
+  for (const dx of [-1, 1]) cyl([x + dx, 1.8, -5.7], 0.04, 0.04, 2.3, 'wood', 6)
+}
+// Nanohana's shaded market along the arrival waterfront.
+for (let i = 0; i < 5; i++) {
+  const x = -4 + i * 2.3
+  box([x, 2.6, 25], [1.8, 0.08, 1.5], i % 2 ? 'rose' : 'cream', [0.13, 0, 0])
+  for (const dx of [-0.8, 0.8]) cyl([x + dx, 1.6, 25.6], 0.035, 0.035, 2, 'wood', 6)
+  box([x, 1.5, 25], [1.5, 0.55, 0.6], 'wood')
+}
 // A few exposed desert rock formations, retaining open sand around the city.
 for (let i = 0; i < 20; i++) {
   const x = -36 + rand() * 70,
     z = -25 + rand() * 12
   if (Math.hypot(x - cx, z - cz) < 19) continue
+  if (Math.hypot(x - 34, z + 10) < 7) continue
   add(
     new T.DodecahedronGeometry(1, 0),
     'ochre',

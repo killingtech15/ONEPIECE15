@@ -1123,3 +1123,265 @@ kbd {
 .masthead {
   background: linear-gradient(180deg, #e9e9dc60, transparent);
 }
+
+/* One measured boundary for the canvas, markers and dock at every desktop size. */
+.scene {
+  bottom: var(--dock-height, 178px);
+}
+.overlay {
+  bottom: calc(var(--dock-height, 178px) + 28px);
+}
+.marker-layer {
+  position: fixed;
+  inset: 0 0 var(--dock-height, 178px);
+  z-index: 20;
+  overflow: hidden;
+  pointer-events: none;
+}
+.map-marker {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 4px 4px 20px;
+  pointer-events: auto;
+  will-change: transform;
+  transition: none;
+}
+.map-marker:after {
+  left: 25px;
+  top: 47px;
+  height: 17px;
+}
+.marker-number {
+  width: 44px;
+  height: 44px;
+  font-size: 14px;
+  box-shadow: 0 2px 8px #173e4330;
+}
+.marker-label {
+  left: 55px;
+  top: 8px;
+  font-size: 13px;
+  padding: 9px 12px;
+}
+.map-marker.is-selected {
+  z-index: 3;
+}
+.map-marker:hover,
+.map-marker:focus-visible {
+  z-index: 4;
+}
+.merry-marker .marker-number {
+  background: #294e51;
+  color: #fff0cd;
+  border-color: #e2cf9f;
+  font-size: 22px;
+}
+.merry-marker .marker-label {
+  opacity: 1;
+  transform: none;
+  font-family: 'Cinzel', serif;
+  font-size: 14px;
+}
+.merry-marker small {
+  display: block;
+  font:
+    9px 'IBM Plex Mono',
+    monospace;
+  margin-top: 5px;
+  letter-spacing: 0.6px;
+}
+.brand-sub {
+  font-size: 10px;
+}
+.nav-link {
+  font-size: 15px;
+}
+.eyebrow,
+.chapter-kicker {
+  font-size: 12px;
+}
+.intro-copy,
+.story-copy {
+  font-size: 16px;
+  line-height: 1.8;
+}
+.intro-subtitle {
+  font-size: 21px;
+}
+.intro {
+  width: 400px;
+  top: 10%;
+}
+.journey-button {
+  font-size: 15px;
+}
+.island-meta {
+  font-size: 11px;
+  color: #596d61;
+}
+.location-stamp {
+  font-size: 11px;
+}
+.weather {
+  font-size: 14px;
+}
+.scroll-hint {
+  font-size: 10px;
+}
+.travel-caption .mono {
+  font-size: 13px;
+}
+.story {
+  width: 350px;
+  max-height: calc(100% - 80px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 14px 18px 0;
+  background: linear-gradient(90deg, #efeadff5 0%, #efeadfe8 80%, #efeadf00);
+}
+.story:before {
+  display: none;
+}
+.story > .eyebrow {
+  font-size: 11px;
+}
+.back-button,
+.next-story {
+  font-size: 14px;
+}
+.story-title {
+  font-size: 18px;
+}
+.episode-link,
+.episode-link > span {
+  font-size: 12px;
+}
+.rain-story {
+  font-size: 14px;
+}
+kbd {
+  font-size: 10px;
+}
+.island-dock {
+  padding-top: 17px;
+  padding-bottom: 12px;
+}
+.dock-heading > span:last-child {
+  font-size: 13px;
+}
+.landmark-list {
+  grid-template-columns: none;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(250px, 1fr);
+  overflow-x: auto;
+  padding: 0 0 12px;
+  scrollbar-width: thin;
+  scrollbar-color: #a6ac94 #e4dfd0;
+  overscroll-behavior: contain;
+}
+.landmark {
+  min-height: 66px;
+  padding: 10px 18px;
+  gap: 13px;
+}
+.landmark:first-child {
+  padding-left: 5px;
+}
+.landmark-name {
+  font-size: 17px;
+}
+.landmark-name > span {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: #5a7167;
+}
+.landmark-index {
+  font-size: 13px;
+}
+.landmark.active:after {
+  bottom: 0;
+}
+.dock-bottom {
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  margin-top: 11px;
+  padding-top: 9px;
+  color: #5b7163;
+}
+.dock-bottom button {
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+.merry-departure {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font:
+    15px 'Cinzel',
+    serif;
+  background: #f1eadcde;
+  padding: 10px 16px;
+  border: 1px solid #92a295;
+}
+.merry-departure small {
+  display: block;
+  font:
+    10px 'IBM Plex Mono',
+    monospace;
+  letter-spacing: 0.09em;
+  margin-top: 5px;
+}
+.merry-departure:hover {
+  background: #f1eadc;
+}
+.atlas-dialog p {
+  font-size: 16px;
+}
+.setting {
+  font-size: 16px;
+}
+.setting small,
+.credits {
+  font-size: 13px;
+}
+.credits > span {
+  font-size: 12px;
+}
+.loading .mono {
+  font-size: 12px;
+}
+@media (max-height: 800px) {
+  .intro {
+    top: 5%;
+  }
+  .intro-copy {
+    margin-bottom: 18px;
+    line-height: 1.65;
+  }
+  .title-space {
+    height: 86px;
+  }
+  .intro-subtitle {
+    margin-bottom: 12px;
+  }
+  .island-meta {
+    margin-top: 15px;
+  }
+  .story {
+    top: 2%;
+    max-height: calc(100% - 68px);
+  }
+  .back-button {
+    margin-bottom: 18px;
+  }
+  .story h2 {
+    font-size: 32px;
+  }
+  .dock-bottom {
+    margin-top: 8px;
+  }
+  .scene-controls .scroll-hint {
+    display: none;
+  }
+}

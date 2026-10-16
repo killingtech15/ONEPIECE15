@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import {
-  Billboard,
   Environment,
-  Html,
   MeshTransmissionMaterial,
   PerspectiveCamera,
   Text,
@@ -34,6 +32,8 @@ type Props = {
   onSelect: (index: number) => void
   onHover: (index: number | null) => void
   onReady: () => void
+  markerLayer: HTMLDivElement | null
+  onWorldMap: () => void
 }
 
 function CameraRig({ selected, reduced }: Pick<Props, 'selected' | 'reduced'>) {
@@ -72,7 +72,7 @@ function CameraRig({ selected, reduced }: Pick<Props, 'selected' | 'reduced'>) {
         lx: p.target[0] - 4,
         ly: p.target[1],
         lz: p.target[2],
-        duration: reduced ? 0 : 1.5,
+        duration: reduced ? 0 : 1,
         ease: 'power4.inOut',
       })
     } else {
@@ -92,11 +92,11 @@ function CameraRig({ selected, reduced }: Pick<Props, 'selected' | 'reduced'>) {
       animation.current?.kill()
     }
   }, [selected, reduced, journey])
-  useFrame((state, dt) => {
+  useFrame((_, dt) => {
     if (selected === null && !animation.current?.isActive()) {
       journey.getPointAt(T.MathUtils.clamp(travel.progress, 0, 1), point)
       journey.getTangentAt(T.MathUtils.clamp(travel.progress, 0, 1), tangent)
-      const damp = reduced ? 1 : 1 - Math.exp(-dt * 5)
+      const damp = reduced ? 1 : 1 - Math.exp(-dt * 12)
       const p = pose.current
       p.x = T.MathUtils.lerp(p.x, point.x, damp)
       p.y = T.MathUtils.lerp(p.y, point.y, damp)
@@ -109,9 +109,9 @@ function CameraRig({ selected, reduced }: Pick<Props, 'selected' | 'reduced'>) {
     rig.current.position.set(p.x, p.y, p.z)
     rig.current.updateMatrixWorld()
     focus.set(p.lx, p.ly, p.lz)
-    if (!reduced && selected === null) focus.x += state.pointer.x * 0.7
     camera.current.lookAt(focus)
-  })
+    camera.current.updateMatrixWorld()
+  }, -3)
   return (
     <group ref={rig} position={[76, 57, 94]}>
       <PerspectiveCamera ref={camera} makeDefault fov={37} near={0.2} far={420} />
@@ -119,11 +119,13 @@ function CameraRig({ selected, reduced }: Pick<Props, 'selected' | 'reduced'>) {
   )
 }
 
-function Island({ onReady, onSelect }: Pick<Props, 'onReady' | 'onSelect'>) {
+function Island({ onReady }: Pick<Props, 'onReady'>) {
   const { scene } = useGLTF(island.meshUrl)
+  const gl = useThree((s) => s.gl)
   useEffect(() => {
     scene.traverse((o) => {
       if (o instanceof T.Mesh) {
+        o.layers.enable(1)
         const old = o.material as T.MeshBasicMaterial | T.MeshStandardMaterial
         if (!(old instanceof T.MeshBasicMaterial)) {
           o.material = new T.MeshBasicMaterial({
@@ -131,19 +133,18 @@ function Island({ onReady, onSelect }: Pick<Props, 'onReady' | 'onSelect'>) {
             side: T.DoubleSide,
           })
         }
+        const map = (o.material as T.MeshBasicMaterial).map
+        if (map) {
+          map.anisotropy = Math.min(8, gl.capabilities.getMaxAnisotropy())
+          map.minFilter = T.LinearMipmapLinearFilter
+          map.magFilter = T.LinearFilter
+          map.needsUpdate = true
+        }
       }
     })
     onReady()
-  }, [scene, onReady])
-  return (
-    <primitive
-      object={scene}
-      onClick={(e: { stopPropagation: () => void }) => {
-        e.stopPropagation()
-        onSelect(0)
-      }}
-    />
-  )
+  }, [scene, onReady, gl])
+  return <primitive object={scene} />
 }
 
 function ArcTitle({ reduced }: { reduced: boolean }) {
@@ -218,7 +219,7 @@ function ArcTitle({ reduced }: { reduced: boolean }) {
       .applyMatrix4(camera.matrixWorld)
     group.current.quaternion.copy(camera.quaternion)
     group.current.scale.setScalar(w / size.width)
-    group.current.visible = travel.progress < 0.18
+    group.current.visible = travel.progress <= 0.16
   })
   return (
     <group ref={group}>
@@ -237,32 +238,74 @@ function ArcTitle({ reduced }: { reduced: boolean }) {
   )
 }
 
-function Marker({
-  index,
+// One DOM layer projects all anchors after the camera updates. No per-marker
+// scene raycasts, occlusion toggles, or React renders during camera movement.
+function Markers({ markerLayer }: Pick<Props, 'markerLayer'>) {
+  const buttons = useMemo(
+    () =>
+      markerLayer ? Array.from(markerLayer.querySelectorAll<HTMLButtonElement>('.map-marker')) : [],
+    [markerLayer],
+  )
+  const points = useMemo(
+    () => [
+      ...island.incidents.map(({ localPosition: p }) => new T.Vector3(p.x, p.y + 1.4, p.z)),
+      new T.Vector3(16, 1.6, 31),
+    ],
+    [],
+  )
+  const projected = useMemo(() => new T.Vector3(), [])
+  useFrame(({ camera, size }) => {
+    points.forEach((point, i) => {
+      const button = buttons[i]
+      if (!button) return
+      projected.copy(point).project(camera)
+      const x = ((projected.x + 1) * size.width) / 2
+      const y = ((1 - projected.y) * size.height) / 2
+      button.style.transform = `translate3d(${x}px,${y}px,0) translate(-50%,-100%)`
+      button.style.visibility =
+        projected.z < -1 || projected.z > 1 || x < 0 || x > size.width || y < 0 || y > size.height
+          ? 'hidden'
+          : 'visible'
+    })
+  })
+  return null
+}
+
+export function MarkerButtons({
   selected,
   hover,
   onSelect,
   onHover,
-}: Pick<Props, 'selected' | 'hover' | 'onSelect' | 'onHover'> & { index: number }) {
-  const p = island.incidents[index].localPosition
+  onWorldMap,
+}: Pick<Props, 'selected' | 'hover' | 'onSelect' | 'onHover' | 'onWorldMap'>) {
   return (
-    <Html position={[p.x, p.y + 1.4, p.z]} center occlude zIndexRange={[20, 0]}>
+    <>
+      {places.map((place, index) => (
+        <button
+          key={place.name}
+          className={`map-marker ${hover === index ? 'is-hovered' : ''} ${selected === index ? 'is-selected' : ''}`}
+          aria-label={`Explore ${place.name}`}
+          onClick={() => onSelect(index)}
+          onPointerEnter={() => onHover(index)}
+          onPointerLeave={() => onHover(null)}
+          onFocus={() => onHover(index)}
+          onBlur={() => onHover(null)}
+        >
+          <span className="marker-number">0{index + 1}</span>
+          <span className="marker-label">{place.name}</span>
+        </button>
+      ))}
       <button
-        className={`map-marker ${hover === index ? 'is-hovered' : ''} ${selected === index ? 'is-selected' : ''}`}
-        aria-label={`Explore ${places[index].name}`}
-        onClick={(e) => {
-          e.stopPropagation()
-          onSelect(index)
-        }}
-        onPointerEnter={() => onHover(index)}
-        onPointerLeave={() => onHover(null)}
-        onFocus={() => onHover(index)}
-        onBlur={() => onHover(null)}
+        className="map-marker merry-marker"
+        onClick={onWorldMap}
+        aria-label="Board the Going Merry and open the world map"
       >
-        <span className="marker-number">0{index + 1}</span>
-        <span className="marker-label">{places[index].name}</span>
+        <span className="marker-number">⚓</span>
+        <span className="marker-label">
+          Going Merry <small>OPEN WORLD MAP ↗</small>
+        </span>
       </button>
-    </Html>
+    </>
   )
 }
 
@@ -329,7 +372,15 @@ function Falcon({ active, reduced }: { active: boolean; reduced: boolean }) {
   )
 }
 
-function Sand({ active, reduced }: { active: boolean; reduced: boolean }) {
+function Sand({
+  active,
+  reduced,
+  position = [-24, 2, -4],
+}: {
+  active: boolean
+  reduced: boolean
+  position?: [number, number, number]
+}) {
   const ref = useRef<T.Points>(null!)
   const positions = useMemo(
     () =>
@@ -350,7 +401,7 @@ function Sand({ active, reduced }: { active: boolean; reduced: boolean }) {
     if (!reduced) ref.current.rotation.y += dt * (active ? 1.7 : 0.15)
   })
   return (
-    <points ref={ref} position={[-24, 2, -4]} visible={active && !reduced}>
+    <points ref={ref} position={position} visible={active && !reduced}>
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
@@ -359,7 +410,15 @@ function Sand({ active, reduced }: { active: boolean; reduced: boolean }) {
   )
 }
 
-function Ship({ active, reduced }: { active: boolean; reduced: boolean }) {
+function Ship({
+  active,
+  reduced,
+  onWorldMap,
+}: {
+  active: boolean
+  reduced: boolean
+  onWorldMap: () => void
+}) {
   const group = useRef<T.Group>(null!)
   useFrame(({ clock }, dt) => {
     group.current.position.y = 0.7 + (reduced ? 0 : Math.sin(clock.elapsedTime * 1.2) * 0.13)
@@ -372,7 +431,15 @@ function Ship({ active, reduced }: { active: boolean; reduced: boolean }) {
     group.current.rotation.z = reduced ? 0 : Math.sin(clock.elapsedTime * 0.8) * 0.035
   })
   return (
-    <group ref={group} position={[16, 0.7, 31]} scale={0.8}>
+    <group
+      ref={group}
+      position={[16, 0.7, 31]}
+      scale={1.15}
+      onClick={(e) => {
+        e.stopPropagation()
+        onWorldMap()
+      }}
+    >
       <mesh scale={[1, 0.7, 2.1]}>
         <sphereGeometry args={[1, 16, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2]} />
         <meshBasicMaterial color="#8f593b" side={T.DoubleSide} />
@@ -397,6 +464,46 @@ function Ship({ active, reduced }: { active: boolean; reduced: boolean }) {
         <sphereGeometry args={[0.35, 12, 8]} />
         <meshBasicMaterial color="#eee4cd" />
       </mesh>
+      <mesh position={[0, 0.72, 2.2]} scale={[1, 0.7, 1]}>
+        <sphereGeometry args={[0.24, 16, 12]} />
+        <meshBasicMaterial color="#f6ead3" />
+      </mesh>
+      {[-1, 1].map((side) => (
+        <group key={side}>
+          <mesh position={[side * 0.32, 0.9, 1.88]} rotation={[0, Math.PI / 2, 0]}>
+            <torusGeometry args={[0.22, 0.09, 8, 20, Math.PI * 1.7]} />
+            <meshBasicMaterial color="#bb9363" />
+          </mesh>
+          <mesh position={[side * 0.2, 0.88, 2.16]}>
+            <sphereGeometry args={[0.048, 10, 8]} />
+            <meshBasicMaterial color="#352e28" />
+          </mesh>
+          <mesh position={[side * 0.86, 0.32, -0.1]}>
+            <boxGeometry args={[0.08, 0.08, 2.8]} />
+            <meshBasicMaterial color="#ece0bd" />
+          </mesh>
+        </group>
+      ))}
+      <group position={[0, 2.7, 1.13]}>
+        <mesh>
+          <circleGeometry args={[0.26, 24]} />
+          <meshBasicMaterial color="#313834" side={T.DoubleSide} />
+        </mesh>
+        <mesh position={[0, 0.2, 0.015]}>
+          <boxGeometry args={[0.7, 0.09, 0.025]} />
+          <meshBasicMaterial color="#c89e4c" />
+        </mesh>
+        <mesh position={[0, 0.3, 0.015]}>
+          <circleGeometry args={[0.2, 20, 0, Math.PI]} />
+          <meshBasicMaterial color="#c89e4c" side={T.DoubleSide} />
+        </mesh>
+        {[-1, 1].map((side) => (
+          <mesh key={side} position={[side * 0.1, 0.02, 0.02]}>
+            <circleGeometry args={[0.06, 12]} />
+            <meshBasicMaterial color="#f6efd9" />
+          </mesh>
+        ))}
+      </group>
       <mesh position={[0, 1.1, -0.7]}>
         <boxGeometry args={[1, 0.8, 0.9]} />
         <meshBasicMaterial color="#e9d4a8" />
@@ -413,7 +520,7 @@ function Rain({ rain, reduced }: { rain: boolean; reduced: boolean }) {
   const ref = useRef<T.LineSegments>(null!)
   const positions = useMemo(() => {
     const a = []
-    for (let i = 0; i < 700; i++) {
+    for (let i = 0; i < 320; i++) {
       const x = Math.sin(i * 43.1) * 43,
         y = (i * 0.731) % 34,
         z = Math.cos(i * 79.3) * 32
@@ -434,7 +541,7 @@ function Rain({ rain, reduced }: { rain: boolean; reduced: boolean }) {
   )
 }
 
-function LogPose({ reduced }: { reduced: boolean }) {
+function LogPose({ reduced, quality }: { reduced: boolean; quality: boolean }) {
   const needle = useRef<T.Group>(null!)
   useFrame(({ clock }) => {
     needle.current.rotation.z = reduced ? -0.4 : Math.sin(clock.elapsedTime * 0.9) * 0.25 - 0.4
@@ -447,16 +554,27 @@ function LogPose({ reduced }: { reduced: boolean }) {
       </mesh>
       <mesh>
         <sphereGeometry args={[1.12, 32, 24]} />
-        <MeshTransmissionMaterial
-          transmission={1}
-          ior={1.52}
-          thickness={2.5}
-          roughness={0.05}
-          chromaticAberration={0.1}
-          resolution={128}
-          samples={4}
-          backside={false}
-        />
+        {quality ? (
+          <MeshTransmissionMaterial
+            transmission={1}
+            ior={1.52}
+            thickness={2.5}
+            roughness={0.05}
+            chromaticAberration={0.1}
+            resolution={128}
+            samples={4}
+            backside={false}
+          />
+        ) : (
+          <meshPhysicalMaterial
+            color="#d6efeb"
+            transparent
+            opacity={0.23}
+            roughness={0.06}
+            metalness={0.1}
+            depthWrite={false}
+          />
+        )}
       </mesh>
       <group ref={needle}>
         <Select enabled>
@@ -524,7 +642,7 @@ function Effects({
 }
 
 export default function Scene(props: Props) {
-  const { selected, hover, reduced, rain, onSelect, onHover, onReady, quality } = props
+  const { selected, hover, reduced, rain, onReady, quality } = props
   const sunlight = useRef<T.DirectionalLight>(null!)
   return (
     <Selection>
@@ -538,26 +656,23 @@ export default function Scene(props: Props) {
         environmentIntensity={0.5}
         environmentRotation={[0, 1, 0]}
       />
-      <Island onReady={onReady} onSelect={onSelect} />
+      <Island onReady={onReady} />
       <Ocean reduced={reduced} rain={rain} />
       {selected === null && <ArcTitle reduced={reduced} />}
-      {places.map((_, index) => (
-        <Marker
-          key={index}
-          index={index}
-          selected={selected}
-          hover={hover}
-          onSelect={onSelect}
-          onHover={onHover}
-        />
-      ))}
+      <Markers {...props} />
       <PalaceFlags active={hover === 0 || selected === 0} reduced={reduced} />
       <Falcon active={hover === 1 || selected === 1} reduced={reduced} />
       <Sand active={hover === 2 || selected === 2} reduced={reduced} />
-      <Ship active={hover === 3 || selected === 3} reduced={reduced} />
+      <Sand active={hover === 5 || selected === 5} reduced={reduced} position={[-22, 2, 12]} />
+      <Sand active={hover === 6 || selected === 6} reduced={reduced} position={[19, 2, 21]} />
+      <Ship
+        active={hover === 4 || selected === 4}
+        reduced={reduced}
+        onWorldMap={props.onWorldMap}
+      />
       <Rain rain={rain} reduced={reduced} />
-      <LogPose reduced={reduced} />
-      <Effects reduced={reduced} quality={quality} light={sunlight} />
+      <LogPose reduced={reduced} quality={quality} />
+      {quality && <Effects reduced={reduced} quality={quality} light={sunlight} />}
     </Selection>
   )
 }

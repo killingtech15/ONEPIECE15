@@ -1,0 +1,21 @@
+﻿import { chromium } from '@playwright/test'
+const browser = await chromium.launch({ channel: 'chrome', headless: true })
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+const errors = []
+page.on('pageerror', (e) => errors.push(e.message))
+await page.goto('http://127.0.0.1:5173')
+await page.locator('.loading.is-ready').waitFor({ timeout: 60000 })
+await page.waitForTimeout(1800)
+await page
+  .getByRole('button', { name: 'Board the Going Merry and open the world map', exact: true })
+  .click()
+await page.screenshot({ path: 'artifacts/world-map.png' })
+await page.getByRole('textbox', { name: 'Find a place' }).fill('Alabasta')
+await page.locator('.chart-results button').click()
+await page.screenshot({ path: 'artifacts/world-map-close.png' })
+await page.keyboard.press('Escape')
+await page.setViewportSize({ width: 1280, height: 720 })
+await page.waitForTimeout(2000)
+await page.screenshot({ path: 'artifacts/desktop-small.png' })
+console.log(JSON.stringify({ errors }))
+await browser.close()

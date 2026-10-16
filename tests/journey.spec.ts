@@ -1,5 +1,68 @@
 import { test, expect } from '@playwright/test'
 
+test('desktop markers stay steady, readable, and the ship opens a working chart', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 720 })
+  await page.goto('/')
+  await expect(page.locator('.loading')).toHaveClass(/is-ready/, { timeout: 45000 })
+  await page.waitForTimeout(2000)
+  const markers = page.locator('.map-marker')
+  await expect(markers).toHaveCount(9)
+  const samples = await page.evaluate(async () => {
+    const snapshots: { x: number; y: number; visible: boolean }[][] = []
+    for (let frame = 0; frame < 60; frame++) {
+      await new Promise(requestAnimationFrame)
+      snapshots.push(
+        Array.from(document.querySelectorAll('.map-marker')).map((el) => {
+          const r = el.getBoundingClientRect()
+          return { x: r.x, y: r.y, visible: getComputedStyle(el).visibility === 'visible' }
+        }),
+      )
+    }
+    return snapshots
+  })
+  for (const sample of samples)
+    sample.forEach((marker, i) => {
+      expect(marker.visible).toBe(true)
+      expect(Math.abs(marker.x - samples[0][i].x)).toBeLessThan(1)
+      expect(Math.abs(marker.y - samples[0][i].y)).toBeLessThan(1)
+    })
+  expect(
+    await page.locator('.intro-copy').evaluate((el) => parseFloat(getComputedStyle(el).fontSize)),
+  ).toBeGreaterThanOrEqual(16)
+  expect(
+    (await page.locator('.marker-number').first().boundingBox())!.width,
+  ).toBeGreaterThanOrEqual(44)
+  const bounds = await page.evaluate(() => ({
+    scene: document.querySelector('.scene')!.getBoundingClientRect().bottom,
+    dock: document.querySelector('.island-dock')!.getBoundingClientRect().top,
+    markers: document.querySelector('.marker-layer')!.getBoundingClientRect().bottom,
+  }))
+  expect(Math.abs(bounds.scene - bounds.dock)).toBeLessThan(1)
+  expect(Math.abs(bounds.markers - bounds.dock)).toBeLessThan(1)
+  await page
+    .getByRole('button', { name: 'Board the Going Merry and open the world map', exact: true })
+    .click()
+  await expect(page.locator('.world-dialog')).toBeVisible()
+  const surface = page.locator('.chart-surface')
+  const transform = await page
+    .locator('.chart-paper')
+    .evaluate((el) => (el as HTMLElement).style.transform)
+  await surface.focus()
+  await page.keyboard.press('ArrowLeft')
+  expect(
+    await page.locator('.chart-paper').evaluate((el) => (el as HTMLElement).style.transform),
+  ).not.toBe(transform)
+  await page.getByRole('checkbox', { name: 'Straw Hat route' }).uncheck()
+  await expect(page.locator('.chart-geography polyline')).toHaveCount(0)
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.world-dialog')).toHaveCount(0)
+  await expect(
+    page.getByRole('button', { name: 'Board the Going Merry and open the world map', exact: true }),
+  ).toBeFocused()
+})
+
 test('desktop journey: focus, return, weather, atlas and reduced motion', async ({ page }) => {
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(e.message))
@@ -18,7 +81,11 @@ test('desktop journey: focus, return, weather, atlas and reduced motion', async 
     ['01 Royal palace ALUBARNA ↗', 'Royal palace'],
     ['02 The clock tower PALACE SQUARE ↗', 'The clock tower'],
     ['03 Rain Dinners RAINBASE ↗', 'Rain Dinners'],
-    ['04 The eastern coast A FINAL FAREWELL ↗', 'The eastern coast'],
+    ['04 Sandora River A FINAL FAREWELL ↗', 'Sandora River'],
+    ['05 Nanohana ARRIVAL PORT ↗', 'Nanohana'],
+    ['06 Yuba THE DRY OASIS ↗', 'Yuba'],
+    ['07 Erumalu THE ABANDONED CITY ↗', 'Erumalu'],
+    ['08 Katorea THE REBEL BASE ↗', 'Katorea'],
   ]
   for (const [button, title] of stops) {
     await page.getByRole('button', { name: button, exact: true }).click()
@@ -41,14 +108,26 @@ test('desktop journey: focus, return, weather, atlas and reduced motion', async 
   )
   await page.keyboard.press('Escape')
 
-  await page.getByRole('button', { name: 'The atlas', exact: true }).click()
-  await expect(page.getByRole('dialog')).toBeVisible()
-  await page.getByRole('button', { name: '03 · Rain Dinners', exact: true }).click()
-  await expect(page.getByRole('dialog')).not.toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Rain Dinners', exact: true })).toBeVisible()
-  await page.keyboard.press('Escape')
+  await page.getByRole('button', { name: 'Set sail on the Going Merry', exact: false }).click()
+  const chart = page.getByRole('dialog', { name: 'An ocean of stories.' })
+  await expect(chart).toBeVisible()
+  await expect(chart.locator('.chart-place')).toHaveCount(25)
+  await page.getByRole('textbox', { name: 'Find a place' }).fill('Water 7')
+  await page.locator('.chart-results button').click()
+  await expect(chart.getByRole('heading', { name: 'Water 7', exact: true })).toBeVisible()
+  await expect(page.locator('.chart-status')).toHaveText('Chart entry · 3D island to come')
+  const previousZoom = await page.locator('.chart-tools output').textContent()
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click()
+  expect(await page.locator('.chart-tools output').textContent()).not.toBe(previousZoom)
+  await page.getByRole('button', { name: 'Fit chart', exact: true }).click()
+  await page.getByRole('button', { name: 'View Alabasta', exact: true }).click()
+  await page.getByRole('button', { name: 'Explore the island', exact: false }).click()
+  await expect(chart).toHaveCount(0)
+  expect(Math.abs((await page.evaluate(() => scrollY)) - scrollBefore)).toBeLessThan(3)
   await page.getByRole('button', { name: 'Experience settings', exact: true }).click()
   await page.getByRole('checkbox', { name: /Reduced motion/ }).check()
+  await page.getByRole('checkbox', { name: /High visual quality/ }).check()
+  await page.waitForTimeout(500)
   await page.getByRole('checkbox', { name: /High visual quality/ }).uncheck()
   await expect(page.locator('.app')).toHaveClass(/reduced-motion/)
   await page.keyboard.press('Escape')

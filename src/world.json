@@ -5,31 +5,91 @@
       "name": "Alabasta",
       "meshUrl": "/models/alabasta-baked.glb",
       "splineProgress": 0.0,
-      "cameraZoomOffset": { "x": 32, "y": 28, "z": 42 },
+      "cameraZoomOffset": {
+        "x": 32,
+        "y": 28,
+        "z": 42
+      },
       "incidents": [
         {
           "title": "A kingdom finds its voice",
           "episodes": "121–126",
-          "localPosition": { "x": 6, "y": 20, "z": -9 },
+          "localPosition": {
+            "x": 6,
+            "y": 20,
+            "z": -9
+          },
           "description": "Above Alubarna, Vivi fights to make her people hear her. Beneath the city, Luffy faces Crocodile. When the rain finally returns, the fighting falls silent."
         },
         {
           "title": "The wings that carried hope",
           "episodes": "124–125",
-          "localPosition": { "x": -1, "y": 16.5, "z": 3 },
+          "localPosition": {
+            "x": -1,
+            "y": 16.5,
+            "z": 3
+          },
           "description": "The clock tower hides a cannon aimed at the crowded square. Vivi reaches it, but the shell is still counting down. Pell carries it high above the city."
         },
         {
           "title": "Behind the golden façade",
           "episodes": "105–110",
-          "localPosition": { "x": -24, "y": 10.5, "z": -4 },
+          "localPosition": {
+            "x": -24,
+            "y": 10.5,
+            "z": -4
+          },
           "description": "In the oasis city of Rainbase, Crocodile's casino conceals the machinery of a rebellion. The crew's search for answers becomes a trap beneath Rain Dinners."
         },
         {
           "title": "An answer without words",
           "episodes": "129",
-          "localPosition": { "x": 14, "y": 5.5, "z": 29 },
+          "localPosition": {
+            "x": 25,
+            "y": 5,
+            "z": 7
+          },
           "description": "Vivi stays with the kingdom she loves. As the Going Merry sails away, the crew raises their marked arms: a quiet promise that distance cannot undo."
+        },
+        {
+          "title": "Where the desert journey begins",
+          "episodes": "92-95",
+          "localPosition": {
+            "x": 0,
+            "y": 5,
+            "z": 24
+          },
+          "description": "The Going Merry reaches Nanohana, Alabasta's busy port. The crew gathers supplies, Luffy crosses paths with Ace, and Vivi prepares to lead her friends inland."
+        },
+        {
+          "title": "The man who kept digging",
+          "episodes": "102-104",
+          "localPosition": {
+            "x": -22,
+            "y": 6,
+            "z": 12
+          },
+          "description": "Sand has overwhelmed the oasis. Toto keeps digging for water and refuses to give up on Yuba, even after the rebel army has moved to Katorea."
+        },
+        {
+          "title": "An oasis lost to the sand",
+          "episodes": "96",
+          "localPosition": {
+            "x": 19,
+            "y": 5,
+            "z": 21
+          },
+          "description": "Once a green city beside the Sandora River, Erumalu now stands abandoned. Its dry canals and empty streets show the crew what the drought has taken."
+        },
+        {
+          "title": "A rebellion on the move",
+          "episodes": "Alabasta arc",
+          "localPosition": {
+            "x": 34,
+            "y": 6,
+            "z": -10
+          },
+          "description": "After leaving Yuba, the rebel army establishes its base at Katorea. Koza leads the rebels toward Alubarna as Baroque Works drives the kingdom closer to war."
         }
       ]
     }

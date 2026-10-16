@@ -18,30 +18,31 @@ Open the URL printed by Vite. `npm run build` creates the static production site
 - Scroll or select **Enter the kingdom** to follow the curved camera route.
 - Hover over a map marker or its bottom navigation entry to animate that landmark.
 - Select a landmark to stop scrolling and move the camera closer. **Escape** or **Return to the journey** restores the previous route position.
-- Visit the palace, clock tower, Rain Dinners and coastline. Each stop has a short story and an official episode reference.
+- Visit eight landmarks: the royal palace, clock tower, Rain Dinners, Sandora River, Nanohana, Yuba, Erumalu and Katorea. Each stop has a short story and a source link.
 - Toggle **Desert sun** / **The rain returns** to change the atmosphere.
-- Open **The atlas** for the local schematic, **Field notes** for references, or **Experience settings** for reduced motion and rendering quality.
+- Board the **Going Merry** at Nanohana's arrival waterfront (or select **The atlas**) to open the world chart. Pan, zoom, search 25 places, toggle the Straw Hat route, and return to the same Alabasta journey position. Arrow keys pan the chart; +/− zoom. The other locations currently have chart entries, not 3D scenes.
+- Open **Field notes** for references or **Experience settings** for reduced motion and rendering quality.
 - Keyboard users can reach every landmark through the bottom navigation. Reduced-motion preferences are respected on initial load.
 
 ## Rendering and assets
 
 React 19, TypeScript, Vite, React Three Fiber, Drei, Three.js, GSAP, Lenis and postprocessing.
 
-- Original reference-based geometry: about 102,000 triangles, consolidated into one static island mesh.
+- Original reference-based geometry: about 132,000 triangles, consolidated into one static island mesh, with smoother dome profiles and additional settlements.
 - Blender Cycles diffuse lighting (color, direct and indirect light, including contact shading) baked into a 4096px atlas; optional OpenImageDenoise cleanup. The browser uses an unlit `MeshBasicMaterial`, with no realtime island shadows.
-- Custom Gerstner ocean vertex displacement and a scene-depth texture for shallow color and shoreline foam.
-- Glass Log Pose using transmission, IOR 1.52, thickness 2.5, roughness 0.05 and chromatic aberration 0.1. A local city HDR supplies reflections.
-- SMAA, selected-object bloom for the needle, and a restrained camera-velocity chromatic effect.
+- Custom Gerstner ocean vertex displacement and a scene-depth texture for shallow color and shoreline foam. The depth pass renders static land only, after the camera updates, and is reused while the camera is still. The Sandora channel is carved below the waterline.
+- Balanced rendering is the default: native antialiasing, DPR 1, lightweight transparent Log Pose glass, no postprocessing passes. Texture filtering uses mipmaps and up to 8× anisotropy.
+- High quality adds transmission (IOR 1.52, thickness 2.5, roughness 0.05, chromatic aberration 0.1), SMAA, selective needle bloom and camera-velocity distortion, at up to DPR 1.25. Both modes use a local HDR for reflections. The 3D render loop pauses while the world chart is open.
 - A child camera on a rig follows a Catmull–Rom curve. GSAP/Lenis drive normalized progress; focus transitions interrupt the route without resetting it.
 - The main title is Drei text geometry with a simplex-noise texture and shader discard reveal.
-- Four occluding HTML markers. Drei's non-transform HTML mode keeps their screen size constant without a second distance-scaling correction.
+- Eight landmark markers and a Going Merry entry share one DOM overlay. Their world anchors project directly after the camera update, without per-frame island raycasts or building-occlusion toggles. Marker hit circles remain 44px; the canvas and marker layer share the dock's measured boundary.
 - The mainland stays anchored so marker coordinates and depth-based shore foam remain stable. The ship bobs, flags move, a falcon circles and hovered Rainbase stirs sand.
 
 ## Content and art boundaries
 
 This is an original stylized interpretation, **not an exact anime reconstruction or a geographically accurate world map**. Alubarna, Rainbase and the coast are compressed into one navigable scene. The ship is a simplified visual suggestion, not a detailed character asset. No ripped game models or AI-generated bitmap artwork are included.
 
-The first milestone has four landmarks, not exhaustive arc coverage. Story content stops before the timeskip. Mobile polish, the rest of the world, audio, character models and deployment remain future work.
+The island has eight landmarks, not exhaustive arc coverage. The world chart is an unfolded schematic with the four Blues, Red Line, Grand Line and Calm Belts; coordinates, sizes and distances are illustrative. Story content stops before the timeskip. Mobile polish, additional 3D islands, audio, character models and deployment remain future work.
 
 The supplied schema is preserved in [src/world.json](src/world.json); landmark view offsets and references live in [src/world.ts](src/world.ts). See [the original specification](docs/original-spec.md), [art direction](docs/ART-DIRECTION.md) and [credits](docs/CREDITS.md).
 
@@ -66,6 +67,6 @@ npm run dev
 npm test
 ```
 
-The Playwright tests cover scroll preservation during focus, all four stops, Escape return, weather, atlas navigation, reduced motion, quality switching and missing-model recovery. `node scripts/capture.mjs` saves desktop and palace screenshots under ignored `artifacts/`.
+The Playwright tests cover all eight stops, scroll preservation, Escape return, weather, chart search and zoom, route toggling, keyboard panning, focus restoration, reduced motion, quality switching, marker stability, desktop text sizes, dock alignment and missing-model recovery. `node scripts/capture.mjs` and `node scripts/capture-world.mjs` save desktop, palace and world-chart screenshots under ignored `artifacts/`.
 
-The scene is intended for desktop hardware. The quality toggle reduces pixel density; it does not make this a complete mobile implementation. Large 3D assets and rendering effects still need device-specific profiling before a public release.
+The scene is intended for desktop hardware. Balanced mode removes expensive effects as well as reducing pixel density. Device-specific profiling and mobile work remain before a public release. Vite ignores asset-generation and screenshot directories to avoid Windows file-lock watcher errors during development.

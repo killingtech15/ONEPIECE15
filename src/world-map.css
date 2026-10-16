@@ -1,0 +1,366 @@
+.world-dialog {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: #ece6d7;
+  color: #244b4b;
+  overflow: hidden;
+}
+.world-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+.chart-header {
+  height: 116px;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22px 36px;
+  border-bottom: 1px solid #b5bca9;
+}
+.chart-header h1 {
+  font:
+    500 32px 'Cinzel',
+    serif;
+  margin: 9px 0 0;
+}
+.chart-return {
+  font-size: 15px;
+  padding: 14px 0;
+}
+.chart-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+.chart-sidebar {
+  width: 300px;
+  flex-shrink: 0;
+  border-right: 1px solid #9eac9d;
+  padding: 25px 26px;
+  overflow: auto;
+}
+.chart-search {
+  position: relative;
+}
+.chart-search label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+.chart-search input {
+  font: inherit;
+  font-size: 14px;
+  width: 100%;
+  color: #254d4a;
+  background: #f7f2e6;
+  border: 1px solid #9daa99;
+  border-radius: 0;
+  padding: 12px;
+}
+.chart-results {
+  position: absolute;
+  top: 79px;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  box-shadow: 0 10px 25px #294b4820;
+  background: #f5efdf;
+  border: 1px solid #a6ad97;
+}
+.chart-results button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-size: 15px;
+  padding: 12px;
+  border-bottom: 1px solid #c7ccb9;
+}
+.chart-results button:hover {
+  background: #e7dfca;
+}
+.chart-results small {
+  display: block;
+  font-size: 11px;
+  margin-top: 3px;
+  color: #657a6a;
+}
+.chart-results p {
+  padding: 12px;
+  font-size: 14px;
+}
+.chart-entry {
+  padding-top: 32px;
+}
+.chart-entry .eyebrow {
+  color: #a46042;
+}
+.chart-entry h2 {
+  font:
+    500 29px/1.25 'Cinzel',
+    serif;
+  margin: 12px 0;
+}
+.chart-entry p,
+.chart-log p {
+  font-size: 16px;
+  line-height: 1.75;
+  color: #526a62;
+}
+.chart-entry a {
+  display: block;
+  font-size: 12px;
+  margin-top: 24px;
+}
+.chart-enter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 13px 0;
+  width: 100%;
+  border-top: 1px solid #a8b09c;
+  border-bottom: 1px solid #a8b09c;
+  font-size: 15px;
+}
+.chart-status {
+  display: block;
+  padding: 13px 0;
+  font-size: 13px;
+  border-top: 1px solid #bdc3af;
+  color: #7a7b64;
+}
+.island-sketch svg {
+  display: block;
+  width: 100%;
+  height: 110px;
+  fill: #d4c4a0;
+  stroke: #8e896c;
+  stroke-width: 1.2;
+  margin: 16px 0;
+}
+.chart-log {
+  padding-top: 30px;
+  margin-top: 30px;
+  border-top: 1px solid #c3c7b4;
+}
+.chart-log strong {
+  display: block;
+  font:
+    500 18px 'Cinzel',
+    serif;
+  margin-top: 12px;
+}
+.chart-log p {
+  font-size: 13px;
+}
+.chart-surface {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  background: #c5d4c8;
+  cursor: grab;
+  touch-action: none;
+  isolation: isolate;
+}
+.chart-surface.is-dragging {
+  cursor: grabbing;
+}
+.chart-paper {
+  width: 3000px;
+  height: 1500px;
+  position: absolute;
+  transform-origin: 0 0;
+  will-change: transform;
+  user-select: none;
+}
+.chart-geography {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.sea-names {
+  fill: #60887e;
+  font:
+    32px 'Cinzel',
+    serif;
+  letter-spacing: 7px;
+  text-anchor: middle;
+}
+.chart-red-label {
+  font:
+    22px 'IBM Plex Mono',
+    monospace;
+  letter-spacing: 8px;
+  fill: #874d3d;
+}
+.grand-label {
+  font:
+    30px 'Cinzel',
+    serif;
+  letter-spacing: 4px;
+  fill: #345f5d;
+  text-anchor: middle;
+}
+.belt-label {
+  font:
+    16px 'IBM Plex Mono',
+    monospace;
+  letter-spacing: 5px;
+  fill: #587b6c;
+  text-anchor: middle;
+}
+.chart-place {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%) scale(var(--label-scale, 1));
+  overflow: visible;
+}
+.chart-pin {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 2px solid #ecdfba;
+  background: #355d55;
+  box-shadow: 0 0 0 1px #355d55;
+  flex-shrink: 0;
+}
+.chart-place-label {
+  position: absolute;
+  top: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font:
+    500 13px 'DM Sans',
+    sans-serif;
+  color: #244e4b;
+  background: #dce2ccdf;
+  padding: 2px 5px;
+  border-radius: 2px;
+}
+.chart-place-label small {
+  display: block;
+  font:
+    8px 'IBM Plex Mono',
+    monospace;
+  letter-spacing: 1px;
+  margin-top: 2px;
+}
+.chart-place.current .chart-pin {
+  background: #b1633c;
+  box-shadow:
+    0 0 0 5px #c3804b30,
+    0 0 0 1px #a05d40;
+}
+.chart-place.current .chart-place-label {
+  background: #f0dfb7;
+}
+.chart-place.selected {
+  z-index: 3;
+}
+.chart-place.selected .chart-place-label,
+.chart-place:hover .chart-place-label {
+  color: #fff3d4;
+  background: #285953;
+}
+.chart-place.selected .chart-pin {
+  box-shadow:
+    0 0 0 4px #28595340,
+    0 0 0 1px #285953;
+}
+.chart-tools {
+  position: absolute;
+  bottom: 26px;
+  right: 26px;
+  display: flex;
+  align-items: center;
+  background: #f0ead9;
+  border: 1px solid #8ca193;
+  cursor: default;
+  box-shadow: 0 4px 12px #31594e10;
+}
+.chart-tools button {
+  height: 44px;
+  min-width: 44px;
+  font-size: 23px;
+}
+.chart-tools button:last-child {
+  font-size: 13px;
+  padding: 0 15px;
+  border-left: 1px solid #a7b29f;
+}
+.chart-tools output {
+  font:
+    12px 'IBM Plex Mono',
+    monospace;
+  width: 42px;
+  text-align: center;
+}
+.chart-route {
+  position: absolute;
+  top: 22px;
+  left: 24px;
+  background: #f0ead9e8;
+  padding: 11px 13px;
+  font-size: 13px;
+  cursor: pointer;
+  border: 1px solid #a1b1a0;
+}
+.chart-route input {
+  accent-color: #a65e3d;
+  margin-right: 8px;
+}
+.chart-drag-hint {
+  position: absolute;
+  bottom: 39px;
+  left: 24px;
+  font:
+    10px 'IBM Plex Mono',
+    monospace;
+  letter-spacing: 1px;
+  color: #416e64;
+  pointer-events: none;
+}
+.chart-footer {
+  height: 40px;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 30px;
+  border-top: 1px solid #a8b39e;
+  font:
+    10px 'IBM Plex Mono',
+    monospace;
+  letter-spacing: 0.6px;
+  color: #657b6d;
+}
+@media (max-height: 800px) {
+  .chart-header {
+    height: 95px;
+  }
+  .chart-header h1 {
+    font-size: 27px;
+  }
+  .island-sketch svg {
+    height: 70px;
+  }
+  .chart-entry {
+    padding-top: 24px;
+  }
+  .chart-log {
+    display: none;
+  }
+}
