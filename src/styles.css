@@ -1233,18 +1233,80 @@ kbd {
   font-size: 13px;
 }
 .story {
-  width: 350px;
+  width: 360px;
   max-height: calc(100% - 80px);
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 8px 14px 18px 0;
-  background: linear-gradient(90deg, #efeadff5 0%, #efeadfe8 80%, #efeadf00);
+  padding: 24px;
+  background: #f4f0e7f5;
+  border: 1px solid #345a4f20;
+  border-radius: 8px;
+  box-shadow: 0 8px 28px #213f3812;
+  scrollbar-width: thin;
+  scrollbar-color: #9daa9f transparent;
 }
 .story:before {
   display: none;
 }
 .story > .eyebrow {
+  display: block;
+  font-size: 10px;
+  line-height: 1.6;
+  color: #697b71;
+}
+.story .back-button {
+  width: 100%;
+  font-size: 12px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #345a4f20;
+}
+.story .back-button kbd {
+  margin-left: auto;
+  font-size: 9px;
+}
+.story h2 {
+  font-size: 30px;
+  line-height: 1.2;
+  margin: 8px 0 16px;
+  text-wrap: balance;
+}
+.story .story-rule {
+  width: 32px;
+}
+.story .story-title {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.5;
+  margin: 18px 0 10px;
+}
+.story .story-copy {
+  font-size: 14px;
+  line-height: 1.75;
+  margin: 0;
+  color: #526961;
+}
+.story .episode-link {
+  font-size: 10px;
+  line-height: 1.5;
+  margin-top: 20px;
+}
+.story .episode-link > span {
   font-size: 11px;
+  margin-top: 4px;
+}
+.story .next-story {
+  width: 100%;
+  justify-content: space-between;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid #345a4f20;
+  font-size: 12px;
+}
+.story .rain-story {
+  margin-top: 16px;
+  font-size: 12px;
 }
 .back-button,
 .next-story {
@@ -1382,6 +1444,221 @@ kbd {
     margin-top: 8px;
   }
   .scene-controls .scroll-hint {
+    display: none;
+  }
+}
+
+/* Phone journey: compact navigation, horizontal landmarks and a bottom story. */
+@media (max-width: 760px) {
+  .masthead {
+    height: 64px;
+    padding: 10px 16px;
+    gap: 8px;
+  }
+  .brand {
+    font-size: 12px;
+    gap: 8px;
+  }
+  .brand > svg {
+    width: 27px;
+  }
+  .brand-sub {
+    font-size: 6px;
+    letter-spacing: 1px;
+  }
+  .masthead nav {
+    gap: 8px;
+  }
+  .masthead .nav-link {
+    font-size: 12px;
+    min-height: 44px;
+  }
+  .masthead .icon-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .masthead .nav-link:nth-child(2) {
+    display: none;
+  }
+  .overlay {
+    top: 64px;
+    bottom: calc(var(--dock-height, 112px) + 12px);
+  }
+  .intro {
+    left: 20px;
+    top: 12px;
+    width: calc(100% - 40px);
+  }
+  .chapter-kicker {
+    font-size: 9px;
+  }
+  .title-space {
+    height: 66px;
+  }
+  .intro-subtitle {
+    font-size: 17px;
+    margin-bottom: 8px;
+  }
+  .intro-copy {
+    font-size: 13px;
+    line-height: 1.6;
+    max-width: 280px;
+    margin-bottom: 12px;
+  }
+  .journey-button {
+    font-size: 13px;
+    min-height: 44px;
+  }
+  .island-meta {
+    display: none;
+  }
+  .scene-controls {
+    left: 16px;
+    right: 16px;
+    bottom: 0;
+  }
+  .weather {
+    font-size: 12px;
+    min-height: 44px;
+  }
+  .merry-departure {
+    font-size: 11px;
+    padding: 10px;
+    min-height: 44px;
+    gap: 6px;
+  }
+  .merry-departure small {
+    font-size: 8px;
+  }
+  .merry-departure > svg {
+    width: 18px;
+  }
+  .island-dock {
+    bottom: 0;
+    padding: 10px 16px max(8px, env(safe-area-inset-bottom));
+  }
+  .dock-heading {
+    margin-bottom: 7px;
+  }
+  .dock-heading > span:first-child {
+    font-size: 9px;
+  }
+  .landmark-list {
+    grid-auto-columns: 170px;
+    gap: 0;
+    padding-bottom: 6px;
+    scroll-snap-type: x proximity;
+  }
+  .landmark {
+    min-height: 52px;
+    padding: 8px 12px;
+    scroll-snap-align: start;
+  }
+  .landmark-name {
+    font-size: 13px;
+  }
+  .landmark-name > span {
+    font-size: 9px;
+  }
+  .landmark-index {
+    font-size: 11px;
+  }
+  .story {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    top: auto;
+    bottom: calc(var(--dock-height, 112px) + 10px);
+    width: auto;
+    max-height: 40dvh;
+    padding: 18px;
+    overscroll-behavior: contain;
+  }
+  .story h2 {
+    font-size: 25px;
+    margin: 7px 0 12px;
+  }
+  .story .back-button {
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    min-height: 44px;
+  }
+  .story .next-story,
+  .story .episode-link {
+    min-height: 44px;
+  }
+  .story .story-copy {
+    font-size: 14px;
+  }
+  .is-exploring .scene-controls {
+    display: none;
+  }
+  .map-marker .marker-number {
+    width: 38px;
+    height: 38px;
+  }
+  .atlas-dialog {
+    width: calc(100% - 24px);
+    max-height: 85dvh;
+  }
+  .dialog-inner {
+    padding: 24px 20px;
+  }
+}
+@media (max-width: 760px) {
+  .merry-marker .marker-label {
+    display: none;
+  }
+}
+@media (min-width: 761px) and (max-width: 950px) and (max-height: 500px) {
+  .masthead {
+    height: 56px;
+    padding: 8px 20px;
+  }
+  .brand {
+    font-size: 13px;
+  }
+  .brand > svg {
+    width: 28px;
+  }
+  .island-dock {
+    padding: 6px 20px;
+    bottom: 0;
+  }
+  .dock-heading,
+  .dock-bottom {
+    display: none;
+  }
+  .landmark-list {
+    grid-auto-columns: 180px;
+    padding-bottom: 3px;
+  }
+  .landmark {
+    min-height: 48px;
+    padding: 6px 12px;
+  }
+  .landmark-name {
+    font-size: 13px;
+  }
+  .story {
+    position: fixed;
+    left: 12px;
+    top: 62px;
+    bottom: calc(var(--dock-height, 70px) + 8px);
+    width: 310px;
+    max-height: none;
+    padding: 16px;
+  }
+  .story h2 {
+    font-size: 24px;
+  }
+  .story .back-button {
+    margin-bottom: 12px;
+  }
+  .is-exploring .scene-controls {
+    display: none;
+  }
+  .merry-marker .marker-label {
     display: none;
   }
 }

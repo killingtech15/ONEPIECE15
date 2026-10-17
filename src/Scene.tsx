@@ -37,10 +37,11 @@ type Props = {
 }
 
 function CameraRig({ selected, reduced }: Pick<Props, 'selected' | 'reduced'>) {
+  const size = useThree((state) => state.size)
   const rig = useRef<T.Group>(null!)
   const camera = useRef<T.PerspectiveCamera>(null!)
   const animation = useRef<gsap.core.Tween | null>(null)
-  const pose = useRef({ x: 76, y: 57, z: 94, lx: -11, ly: 3, lz: 0 })
+  const pose = useRef({ x: 76, y: 57, z: 94, lx: -11, ly: 3, lz: 0, shift: 0, shiftY: 0 })
   const journey = useMemo(
     () =>
       new T.CatmullRomCurve3(
@@ -65,15 +66,33 @@ function CameraRig({ selected, reduced }: Pick<Props, 'selected' | 'reduced'>) {
     animation.current?.kill()
     if (selected !== null) {
       const p = places[selected]
+      // Frame each landmark in the space beside the story, at any aspect ratio.
+      const panel = document.querySelector('.story')?.getBoundingClientRect()
+      const mobile = size.width <= 760
+      const reserved = mobile ? 0 : Math.min((panel?.right ?? 0) + 24, size.width * 0.55)
+      const bottom = mobile ? size.height - (panel?.top ?? size.height) + 12 : 0
+      const halfFov = T.MathUtils.degToRad(37 / 2)
+      const availableWidth = Math.max(1, size.width - reserved - 32)
+      const fitAngle = Math.atan(
+        Math.tan(halfFov) *
+          Math.min(
+            availableWidth / size.height,
+            Math.max(0.2, (size.height - bottom - 110) / size.height),
+          ),
+      )
+      const distance = p.radius / Math.sin(fitAngle)
+      const offset = new T.Vector3(...p.offset).normalize().multiplyScalar(distance)
       animation.current = gsap.to(pose.current, {
-        x: p.target[0] + p.offset[0],
-        y: p.target[1] + p.offset[1],
-        z: p.target[2] + p.offset[2],
-        lx: p.target[0] - 4,
+        x: p.target[0] + offset.x,
+        y: p.target[1] + offset.y,
+        z: p.target[2] + offset.z,
+        lx: p.target[0],
         ly: p.target[1],
         lz: p.target[2],
-        duration: reduced ? 0 : 1,
-        ease: 'power4.inOut',
+        shift: reserved / size.width,
+        shiftY: mobile ? (bottom - 60) / size.height : 0,
+        duration: reduced ? 0 : 1.25,
+        ease: 'power2.inOut',
       })
     } else {
       const dest = journey.getPointAt(travel.progress)
@@ -84,6 +103,8 @@ function CameraRig({ selected, reduced }: Pick<Props, 'selected' | 'reduced'>) {
         lx: -11 * (1 - travel.progress),
         ly: 4,
         lz: -1,
+        shift: 0,
+        shiftY: 0,
         duration: reduced ? 0 : 1.25,
         ease: 'power3.inOut',
       })
@@ -91,7 +112,7 @@ function CameraRig({ selected, reduced }: Pick<Props, 'selected' | 'reduced'>) {
     return () => {
       animation.current?.kill()
     }
-  }, [selected, reduced, journey])
+  }, [selected, reduced, journey, size.width, size.height])
   useFrame((_, dt) => {
     if (selected === null && !animation.current?.isActive()) {
       journey.getPointAt(T.MathUtils.clamp(travel.progress, 0, 1), point)
@@ -107,9 +128,25 @@ function CameraRig({ selected, reduced }: Pick<Props, 'selected' | 'reduced'>) {
     }
     const p = pose.current
     rig.current.position.set(p.x, p.y, p.z)
+    if (selected === null && size.width <= 760) {
+      const scale = Math.max(1, (size.height / size.width) * 0.95)
+      rig.current.position.set(
+        p.lx + (p.x - p.lx) * scale,
+        p.ly + (p.y - p.ly) * scale,
+        p.lz + (p.z - p.lz) * scale,
+      )
+    }
     rig.current.updateMatrixWorld()
     focus.set(p.lx, p.ly, p.lz)
     camera.current.lookAt(focus)
+    camera.current.setViewOffset(
+      size.width,
+      size.height,
+      (-p.shift * size.width) / 2,
+      (p.shiftY * size.height) / 2,
+      size.width,
+      size.height,
+    )
     camera.current.updateMatrixWorld()
   }, -3)
   return (

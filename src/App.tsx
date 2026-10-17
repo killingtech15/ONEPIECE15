@@ -170,15 +170,12 @@ export default function App() {
   const detailHeading = useRef<HTMLHeadingElement>(null)
   const onReady = useCallback(() => setSceneReady(true), [])
   const onMapReady = useCallback(() => setMapReady(true), [])
-  const onSelect = useCallback(
-    (index: number) => {
-      returnFocus.current = document.activeElement as HTMLElement
-      setSelected(index)
-      setHover(null)
-      setDialog(null)
-    },
-    [],
-  )
+  const onSelect = useCallback((index: number) => {
+    returnFocus.current = document.activeElement as HTMLElement
+    setSelected(index)
+    setHover(null)
+    setDialog(null)
+  }, [])
   const closeDetail = useCallback(() => {
     setSelected(null)
     requestAnimationFrame(() => returnFocus.current?.focus({ preventScroll: true }))
@@ -228,6 +225,51 @@ export default function App() {
     window.addEventListener('keydown', key)
     return () => window.removeEventListener('keydown', key)
   }, [selected, dialog, worldOpen, closeDetail])
+  useEffect(() => {
+    if (selected === null || dialog || worldOpen || !ready) return
+    let reverseScroll = 0
+    let lastWheel = 0
+    const wheel = (event: WheelEvent) => {
+      if (event.ctrlKey || event.deltaY >= 0) {
+        reverseScroll = 0
+        return
+      }
+      // Let a long story scroll back to its top before leaving the landmark.
+      const panel = (event.target as Element).closest?.('.story')
+      if (panel && panel.scrollTop > 0) return
+      event.preventDefault()
+      const now = performance.now()
+      if (now - lastWheel > 250) reverseScroll = 0
+      lastWheel = now
+      reverseScroll +=
+        -event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? innerHeight : 1)
+      if (reverseScroll >= 45) closeDetail()
+    }
+    window.addEventListener('wheel', wheel, { passive: false, capture: true })
+    let touchY: number | null = null
+    const touchStart = (event: TouchEvent) => {
+      const panel = (event.target as Element).closest?.('.story')
+      touchY =
+        event.touches.length === 1 && (!panel || panel.scrollTop <= 0)
+          ? event.touches[0].clientY
+          : null
+    }
+    const touchMove = (event: TouchEvent) => {
+      if (touchY === null || event.touches.length !== 1) return
+      if (event.touches[0].clientY - touchY > 65) {
+        event.preventDefault()
+        touchY = null
+        closeDetail()
+      }
+    }
+    window.addEventListener('touchstart', touchStart, { passive: true })
+    window.addEventListener('touchmove', touchMove, { passive: false })
+    return () => {
+      window.removeEventListener('wheel', wheel, { capture: true })
+      window.removeEventListener('touchstart', touchStart)
+      window.removeEventListener('touchmove', touchMove)
+    }
+  }, [selected, dialog, worldOpen, ready, closeDetail])
   useEffect(() => {
     if (dialog) modal.current?.showModal()
     else modal.current?.close()
@@ -465,9 +507,6 @@ export default function App() {
           </div>
         </footer>
         <div className="scroll-track" aria-hidden="true" />
-        <div className="small-screen-note">
-          Designed for desktop. Open on a larger screen for the full journey.
-        </div>
       </div>
       <Loading ready={ready} destination={destination} mapReady={mapReady} />
       {worldOpen && <WorldMap onClose={closeWorld} onReady={onMapReady} interactive={ready} />}

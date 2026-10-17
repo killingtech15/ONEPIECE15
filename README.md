@@ -1,6 +1,6 @@
 # ONEPIECE15 · Grand Line Atlas
 
-A desktop-first world atlas that opens on the supplied OnePiece15 map. Select Alabasta to enter its interactive 3D diorama. The project is local-only for now; no hosting or deployment has been configured.
+A responsive world atlas that opens on the supplied OnePiece15 map. Select Alabasta to enter its interactive 3D diorama. The project is local-only for now; no hosting or deployment has been configured.
 
 ## Run
 
@@ -15,10 +15,11 @@ Open the URL printed by Vite. `npm run build` creates the static production site
 
 ## Explore
 
+- On phones, **Browse** opens map search, filters and location details. Drag to pan, pinch or use the zoom buttons, and tap a location. Island landmarks scroll horizontally; stories use a scrollable bottom card in portrait. Swipe downward from the top of a story to return to the journey, or use its return button.
 - The world map opens first. Click **Alabasta** on the chart or in search results to enter the existing island model. The animated sea, clouds and travelling-ship transition plays on initial load and between the map and island scenes. Landmark stories open and close without a loading transition.
 - Scroll or select **Enter the kingdom** to follow the curved camera route.
 - Hover over a map marker or its bottom navigation entry to animate that landmark.
-- Select a landmark to stop scrolling and move the camera closer. **Escape** or **Return to the journey** restores the previous route position.
+- Select a landmark to stop scrolling and frame it beside its story. Each landmark has its own viewing radius, adapted to the screen aspect ratio. Scroll upward, press **Escape**, or select **Return to the journey** to restore the journey camera. If the story panel is scrolled down, scrolling upward first returns its text to the top.
 - Visit eight landmarks: the royal palace, clock tower, Rain Dinners, Sandora River, Nanohana, Yuba, Erumalu and Katorea. Each stop has a short story and a source link.
 - Toggle **Desert sun** / **The rain returns** to change the atmosphere.
 - Board the **Going Merry** at Nanohana's arrival waterfront (or select **The atlas**) to open the world chart. Pan, zoom, search the expanded world directory, toggle the Straw Hat route, and return to the same Alabasta journey position. Arrow keys pan the chart; +/− zoom. The other locations currently have chart entries, not 3D scenes.

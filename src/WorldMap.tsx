@@ -61,6 +61,9 @@ export default function WorldMap({
   const [kind, setKind] = useState('All places')
   const [selected, setSelected] = useState(chartPlaces.find((p) => p.id === 'alabasta')!)
   const [showRoute, setShowRoute] = useState(true)
+  const [browseOpen, setBrowseOpen] = useState(false)
+  const touches = useRef(new Map<number, { x: number; y: number }>())
+  const suppressMapClick = useRef(false)
   const commit = (next: View) => {
     const el = surface.current
     if (!el || !paper.current) return
@@ -219,9 +222,21 @@ export default function WorldMap({
           <h1 id="world-title">An ocean of stories.</h1>
           <span className="chart-edition">ALL ERAS / EAST BLUE TO ELBAPH / MANGA SPOILERS</span>
         </div>
+        <button
+          className="chart-browse-toggle"
+          aria-expanded={browseOpen}
+          aria-controls="chart-sidebar"
+          onClick={() => setBrowseOpen(!browseOpen)}
+        >
+          {browseOpen ? 'Close' : 'Browse'}
+        </button>
       </header>
       <div className="chart-layout">
-        <aside className="chart-sidebar" data-lenis-prevent>
+        <aside
+          id="chart-sidebar"
+          className={`chart-sidebar ${browseOpen ? 'is-open' : ''}`}
+          data-lenis-prevent
+        >
           <div className="chart-search">
             <label htmlFor="island-search">Find a place</label>
             <input
@@ -361,8 +376,15 @@ export default function WorldMap({
             if (e.key === '-') zoomAt(1 / 1.2)
           }}
           onPointerDown={(e) => {
-            if ((e.target as HTMLElement).closest('button,input,label')) return
-            e.currentTarget.setPointerCapture(e.pointerId)
+            const target = e.target as HTMLElement
+            if (touches.current.size === 0) suppressMapClick.current = false
+            if (
+              target.closest('button,input,label') &&
+              !(e.pointerType === 'touch' && target.closest('.chart-place'))
+            )
+              return
+            if (!target.closest('.chart-place')) e.currentTarget.setPointerCapture(e.pointerId)
+            touches.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
             drag.current = {
               x: e.clientX,
               y: e.clientY,
@@ -373,7 +395,30 @@ export default function WorldMap({
             e.currentTarget.classList.add('is-dragging')
           }}
           onPointerMove={(e) => {
+            if (!touches.current.has(e.pointerId)) return
+            const previous = [...touches.current.values()]
+            touches.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+            const current = [...touches.current.values()]
+            if (current.length === 2) {
+              suppressMapClick.current = true
+              const before = Math.hypot(
+                previous[0].x - previous[1].x,
+                previous[0].y - previous[1].y,
+              )
+              const after = Math.hypot(current[0].x - current[1].x, current[0].y - current[1].y)
+              const rect = e.currentTarget.getBoundingClientRect()
+              if (before > 0)
+                zoomAt(
+                  after / before,
+                  (current[0].x + current[1].x) / 2 - rect.left,
+                  (current[0].y + current[1].y) / 2 - rect.top,
+                )
+              drag.current = null
+              return
+            }
             const d = drag.current
+            if (d && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6)
+              suppressMapClick.current = true
             if (d)
               commit({
                 ...view.current,
@@ -381,13 +426,22 @@ export default function WorldMap({
                 y: d.startY + e.clientY - d.y,
               })
           }}
-          onPointerUp={() => {
+          onPointerUp={(e) => {
+            touches.current.delete(e.pointerId)
             drag.current = null
             surface.current?.classList.remove('is-dragging')
           }}
-          onPointerCancel={() => {
+          onPointerCancel={(e) => {
+            touches.current.delete(e.pointerId)
             drag.current = null
             surface.current?.classList.remove('is-dragging')
+          }}
+          onClickCapture={(e) => {
+            if (suppressMapClick.current) {
+              e.preventDefault()
+              e.stopPropagation()
+              suppressMapClick.current = false
+            }
           }}
         >
           <img
@@ -457,7 +511,13 @@ export default function WorldMap({
                 key={p.id}
                 className={`chart-place ${selected.id === p.id ? 'selected' : ''} ${p.id === 'alabasta' ? 'current' : ''}`}
                 style={{ left: `${(p.x / WIDTH) * 100}%`, top: `${(p.y / HEIGHT) * 100}%` }}
-                onClick={() => (p.id === 'alabasta' ? onClose() : setSelected(p))}
+                onClick={() => {
+                  if (p.id === 'alabasta') onClose()
+                  else {
+                    setSelected(p)
+                    setBrowseOpen(true)
+                  }
+                }}
                 aria-label={`View ${p.name}`}
                 aria-pressed={selected.id === p.id}
               >
