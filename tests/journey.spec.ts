@@ -1,10 +1,13 @@
 import { test, expect } from '@playwright/test'
+import { chartPlaces } from '../src/atlas'
 
 test('desktop markers stay steady, readable, and the ship opens a working chart', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1280, height: 720 })
   await page.goto('/')
+  await expect(page.locator('.loading')).toHaveClass(/is-ready/, { timeout: 45000 })
+  await page.getByRole('button', { name: 'View Alabasta', exact: true }).click()
   await expect(page.locator('.loading')).toHaveClass(/is-ready/, { timeout: 45000 })
   await page.waitForTimeout(2000)
   const markers = page.locator('.map-marker')
@@ -48,11 +51,11 @@ test('desktop markers stay steady, readable, and the ship opens a working chart'
   const surface = page.locator('.chart-surface')
   const transform = await page
     .locator('.chart-paper')
-    .evaluate((el) => (el as HTMLElement).style.transform)
+    .evaluate((el) => (el as HTMLElement).style.left)
   await surface.focus()
   await page.keyboard.press('ArrowLeft')
   expect(
-    await page.locator('.chart-paper').evaluate((el) => (el as HTMLElement).style.transform),
+    await page.locator('.chart-paper').evaluate((el) => (el as HTMLElement).style.left),
   ).not.toBe(transform)
   await page.getByRole('checkbox', { name: 'Straw Hat route' }).uncheck()
   await expect(page.locator('.chart-geography polyline')).toHaveCount(0)
@@ -70,6 +73,8 @@ test('desktop journey: focus, return, weather, atlas and reduced motion', async 
     if (m.type() === 'error') errors.push(m.text())
   })
   await page.goto('/')
+  await expect(page.locator('.loading')).toHaveClass(/is-ready/, { timeout: 45000 })
+  await page.getByRole('button', { name: 'View Alabasta', exact: true }).click()
   await expect(page.locator('.loading')).toHaveClass(/is-ready/, { timeout: 45000 })
   await expect(page.getByRole('heading', { name: 'Alabasta', exact: true })).toBeAttached()
   await page.getByRole('button', { name: 'Enter the kingdom', exact: true }).click()
@@ -111,7 +116,9 @@ test('desktop journey: focus, return, weather, atlas and reduced motion', async 
   await page.getByRole('button', { name: 'Set sail on the Going Merry', exact: false }).click()
   const chart = page.getByRole('dialog', { name: 'An ocean of stories.' })
   await expect(chart).toBeVisible()
-  await expect(chart.locator('.chart-place')).toHaveCount(25)
+  await expect(chart.locator('.chart-place')).toHaveCount(
+    chartPlaces.filter((p) => p.position !== 'unknown').length,
+  )
   await page.getByRole('textbox', { name: 'Find a place' }).fill('Water 7')
   await page.locator('.chart-results button').click()
   await expect(chart.getByRole('heading', { name: 'Water 7', exact: true })).toBeVisible()
@@ -121,7 +128,6 @@ test('desktop journey: focus, return, weather, atlas and reduced motion', async 
   expect(await page.locator('.chart-tools output').textContent()).not.toBe(previousZoom)
   await page.getByRole('button', { name: 'Fit chart', exact: true }).click()
   await page.getByRole('button', { name: 'View Alabasta', exact: true }).click()
-  await page.getByRole('button', { name: 'Explore the island', exact: false }).click()
   await expect(chart).toHaveCount(0)
   expect(Math.abs((await page.evaluate(() => scrollY)) - scrollBefore)).toBeLessThan(3)
   await page.getByRole('button', { name: 'Experience settings', exact: true }).click()
@@ -133,9 +139,10 @@ test('desktop journey: focus, return, weather, atlas and reduced motion', async 
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).not.toBeVisible()
   await page
-    .getByRole('button', { name: 'Grand Line Atlas, return to the beginning', exact: true })
+    .getByRole('button', { name: 'Grand Line Atlas, return to the world map', exact: true })
     .click()
-  await expect.poll(() => page.evaluate(() => scrollY)).toBe(0)
+  await expect(chart).toBeVisible()
+  await expect(chart.locator('.chart-header button')).toHaveCount(0)
   expect(errors).toEqual([])
 })
 
@@ -144,6 +151,8 @@ test('missing model gives a recoverable error and leaves stories usable', async 
     route.fulfill({ status: 404, body: 'Unavailable' }),
   )
   await page.goto('/')
+  await expect(page.locator('.loading')).toHaveClass(/is-ready/, { timeout: 45000 })
+  await page.getByRole('button', { name: 'View Alabasta', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'The sea needs another moment.' })).toBeVisible({
     timeout: 30000,
   })

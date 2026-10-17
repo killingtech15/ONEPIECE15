@@ -8,12 +8,12 @@ import {
   type ReactNode,
 } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { useProgress } from '@react-three/drei'
 import Lenis from 'lenis'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Scene, { MarkerButtons } from './Scene'
 import WorldMap from './WorldMap'
+import Loading from './VoyageLoading'
 import { island, places, travel } from './world'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -101,43 +101,64 @@ class SceneBoundary extends Component<
     )
   }
 }
-function Loading({ ready }: { ready: boolean }) {
-  const { progress } = useProgress()
-  return (
-    <div className={`loading ${ready ? 'is-ready' : ''}`} aria-hidden={ready} aria-live="polite">
-      <Icon name="compass" />
-      <span className="eyebrow">THE GRAND LINE ATLAS</span>
-      <p>Plotting a course.</p>
-      <div className="loading-line">
-        <span style={{ width: `${progress}%` }} />
-      </div>
-      <span className="mono">{Math.round(progress)}% · ALABASTA</span>
-    </div>
-  )
-}
-
 export default function App() {
   const [selected, setSelected] = useState<number | null>(null)
   const [hover, setHover] = useState<number | null>(null)
-  const [ready, setReady] = useState(false)
+  const [sceneReady, setSceneReady] = useState(false)
+  const [mapReady, setMapReady] = useState(false)
+  const [transitioning, setTransitioning] = useState(true)
+  const [destination, setDestination] = useState('WORLD CHART')
+  const [islandMounted, setIslandMounted] = useState(false)
+  const transitionTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const navigating = useRef(false)
   const [rain, setRain] = useState(false)
   const [reduced, setReduced] = useState(
     () => matchMedia('(prefers-reduced-motion: reduce)').matches,
   )
   const [quality, setQuality] = useState(false)
-  const [worldOpen, setWorldOpen] = useState(false)
+  const [worldOpen, setWorldOpen] = useState(true)
+  const ready = !transitioning && (worldOpen ? mapReady : sceneReady)
+  const navigate = useCallback(
+    (change: () => void, label: string) => {
+      if (navigating.current) return
+      navigating.current = true
+      setDestination(label)
+      setTransitioning(true)
+      transitionTimer.current = setTimeout(
+        () => {
+          change()
+          setTransitioning(false)
+          navigating.current = false
+        },
+        reduced ? 80 : 1400,
+      )
+    },
+    [reduced],
+  )
+  useEffect(() => {
+    const initial = setTimeout(() => setTransitioning(false), 1300)
+    return () => {
+      clearTimeout(initial)
+      if (transitionTimer.current) clearTimeout(transitionTimer.current)
+    }
+  }, [])
   const worldReturnFocus = useRef<HTMLElement | null>(null)
   const openWorld = useCallback(() => {
+    if (worldOpen) return
     worldReturnFocus.current =
       document.activeElement instanceof HTMLButtonElement
         ? document.activeElement
         : document.querySelector('.merry-marker')
-    setWorldOpen(true)
-  }, [])
+    navigate(() => setWorldOpen(true), 'WORLD CHART')
+  }, [navigate, worldOpen])
   const closeWorld = useCallback(() => {
-    setWorldOpen(false)
-    requestAnimationFrame(() => worldReturnFocus.current?.focus({ preventScroll: true }))
-  }, [])
+    if (!worldOpen) return
+    navigate(() => {
+      setIslandMounted(true)
+      setWorldOpen(false)
+      requestAnimationFrame(() => worldReturnFocus.current?.focus({ preventScroll: true }))
+    }, 'ALABASTA')
+  }, [navigate, worldOpen])
   const [markerLayer, setMarkerLayer] = useState<HTMLDivElement | null>(null)
   const dock = useRef<HTMLElement>(null)
   const [dialog, setDialog] = useState<'settings' | 'notes' | null>(null)
@@ -147,13 +168,17 @@ export default function App() {
   const modal = useRef<HTMLDialogElement>(null)
   const returnFocus = useRef<HTMLElement | null>(null)
   const detailHeading = useRef<HTMLHeadingElement>(null)
-  const onReady = useCallback(() => setReady(true), [])
-  const onSelect = useCallback((index: number) => {
-    returnFocus.current = document.activeElement as HTMLElement
-    setSelected(index)
-    setHover(null)
-    setDialog(null)
-  }, [])
+  const onReady = useCallback(() => setSceneReady(true), [])
+  const onMapReady = useCallback(() => setMapReady(true), [])
+  const onSelect = useCallback(
+    (index: number) => {
+      returnFocus.current = document.activeElement as HTMLElement
+      setSelected(index)
+      setHover(null)
+      setDialog(null)
+    },
+    [],
+  )
   const closeDetail = useCallback(() => {
     setSelected(null)
     requestAnimationFrame(() => returnFocus.current?.focus({ preventScroll: true }))
@@ -216,234 +241,236 @@ export default function App() {
   }, [])
   const go = () =>
     lenis.current?.scrollTo(window.innerHeight * 1.05, { duration: reduced ? 0 : 1.4 })
-  const reset = () => {
-    setSelected(null)
-    lenis.current?.start()
-    lenis.current?.scrollTo(0, { duration: reduced ? 0 : 1.8 })
-  }
 
   return (
     <div
       ref={root}
       className={`app ${departed ? 'has-departed' : ''} ${selected !== null ? 'is-exploring' : ''} ${reduced ? 'reduced-motion' : ''}`}
     >
-      <a className="skip-link" href="#landmarks">
-        Skip to island landmarks
-      </a>
-      <div className="scene" aria-label="Interactive 3D diorama of Alabasta">
-        <SceneBoundary onError={onReady}>
-          <Canvas
-            frameloop={worldOpen ? 'never' : 'always'}
-            dpr={quality ? [1, 1.25] : 1}
-            gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
-          >
-            <Suspense fallback={null}>
-              <Scene
-                selected={selected}
-                hover={hover}
-                reduced={reduced}
-                rain={rain}
-                quality={quality}
-                onSelect={onSelect}
-                onHover={setHover}
-                onReady={onReady}
-                markerLayer={markerLayer}
-                onWorldMap={openWorld}
-              />
-            </Suspense>
-          </Canvas>
-        </SceneBoundary>
-      </div>
-      <div ref={setMarkerLayer} className="marker-layer" aria-label="Island map markers">
-        <MarkerButtons
-          selected={selected}
-          hover={hover}
-          onSelect={onSelect}
-          onHover={setHover}
-          onWorldMap={openWorld}
-        />
-      </div>
-      <div className="paper-wash" aria-hidden="true" />
-      <header className="masthead">
-        <button
-          className="brand"
-          onClick={reset}
-          aria-label="Grand Line Atlas, return to the beginning"
-        >
-          <Icon name="compass" />
-          <span>
-            GRAND LINE<span className="brand-sub">AN INTERACTIVE ATLAS</span>
-          </span>
-        </button>
-        <nav aria-label="Main navigation">
-          <button className="nav-link" onClick={openWorld}>
-            <Icon name="map" />
-            The atlas
-          </button>
-          <button className="nav-link" onClick={() => setDialog('notes')}>
-            Field notes
-          </button>
-          <span className="nav-rule" />
-          <button
-            className="icon-button"
-            onClick={() => setDialog('settings')}
-            aria-label="Experience settings"
-          >
-            <Icon name="settings" />
-          </button>
-        </nav>
-      </header>
-      <main className="overlay">
-        {selected === null ? (
-          <>
-            <section className="intro" aria-labelledby="island-title">
-              <div className="chapter-kicker">
-                <span className="small-rule" /> CHAPTER 01 <span className="dot">·</span> SANDY
-                ISLAND
-              </div>
-              <h1 id="island-title" className="sr-only">
-                Alabasta
-              </h1>
-              <div className="title-space" aria-hidden="true" />
-              <p className="intro-subtitle">A kingdom waiting for rain.</p>
-              <p className="intro-copy">
-                Beyond the dunes, a promise still stands.
-                <br />
-                Follow the needle into the land of sand,
-                <br />
-                and the stories that changed its course.
-              </p>
-              <button className="journey-button" onClick={go}>
-                Enter the kingdom{' '}
-                <span>
-                  <Icon name="arrow" />
-                </span>
-              </button>
-              <div className="island-meta">
-                <span>GRAND LINE</span>
-                <i />
-                <span>PRE-TIMESKIP</span>
-              </div>
-            </section>
-            <div className="travel-caption">
-              <span className="eyebrow">THE DESERT KINGDOM</span>
-              <p>Every place holds a story.</p>
-              <span className="mono">Choose a landmark to look closer.</span>
-            </div>
-          </>
-        ) : (
-          <section className="story" aria-labelledby="story-title" data-lenis-prevent>
-            <button className="back-button" onClick={closeDetail}>
-              <Icon name="arrow" />
-              Return to the journey <kbd>ESC</kbd>
-            </button>
-            <span className="eyebrow">
-              0{selected + 1} <span className="dot">/</span> {places[selected].location}
-            </span>
-            <h2 id="story-title" tabIndex={-1} ref={detailHeading}>
-              {places[selected].name}
-            </h2>
-            <span className="story-rule" />
-            <p className="story-title">{island.incidents[selected].title}</p>
-            <p className="story-copy">{island.incidents[selected].description}</p>
-            <a
-              className="episode-link"
-              href={places[selected].source}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {selected === 7 ? '' : 'EPISODE '}
-              {island.incidents[selected].episodes}
-              <span>Official episode notes ↗</span>
-            </a>
-            {selected === 0 && (
-              <button
-                className={`rain-story ${rain ? 'active' : ''}`}
-                onClick={() => setRain((v) => !v)}
+      <div inert={worldOpen || !ready} aria-hidden={worldOpen || undefined}>
+        <a className="skip-link" href="#landmarks">
+          Skip to island landmarks
+        </a>
+        <div className="scene" aria-label="Interactive 3D diorama of Alabasta">
+          {islandMounted && (
+            <SceneBoundary onError={onReady}>
+              <Canvas
+                frameloop={worldOpen ? 'never' : 'always'}
+                dpr={quality ? [1, 1.25] : 1}
+                gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
               >
-                <Icon name={rain ? 'sun' : 'rain'} />
-                {rain ? 'Return to the desert sun' : 'Let the rain return'}
-              </button>
-            )}
-            <button className="next-story" onClick={() => onSelect((selected + 1) % places.length)}>
-              Next landmark <Icon name="arrow" />
-            </button>
-          </section>
-        )}
-        <aside className="scene-aside">
-          <div className="location-stamp">
-            <span className="stamp-dot" />
-            <span>ALABASTA KINGDOM</span>
-          </div>
-          <div className="north">
-            <span>N</span>
-            <Icon name="compass" />
-            <span className="north-rule" />
-          </div>
-        </aside>
-        <div className="scene-controls">
+                <Suspense fallback={null}>
+                  <Scene
+                    selected={selected}
+                    hover={hover}
+                    reduced={reduced}
+                    rain={rain}
+                    quality={quality}
+                    onSelect={onSelect}
+                    onHover={setHover}
+                    onReady={onReady}
+                    markerLayer={markerLayer}
+                    onWorldMap={openWorld}
+                  />
+                </Suspense>
+              </Canvas>
+            </SceneBoundary>
+          )}
+        </div>
+        <div ref={setMarkerLayer} className="marker-layer" aria-label="Island map markers">
+          <MarkerButtons
+            selected={selected}
+            hover={hover}
+            onSelect={onSelect}
+            onHover={setHover}
+            onWorldMap={openWorld}
+          />
+        </div>
+        <div className="paper-wash" aria-hidden="true" />
+        <header className="masthead">
           <button
-            className={rain ? 'weather active' : 'weather'}
-            onClick={() => setRain((v) => !v)}
-            aria-pressed={rain}
+            className="brand"
+            onClick={openWorld}
+            aria-label="Grand Line Atlas, return to the world map"
           >
-            <Icon name={rain ? 'rain' : 'sun'} />
-            <span>{rain ? 'The rain returns' : 'Desert sun'}</span>
-          </button>
-          <button className="merry-departure" onClick={openWorld}>
-            <Icon name="map" />
+            <Icon name="compass" />
             <span>
-              Set sail on the Going Merry<small>OPEN THE WORLD MAP</small>
+              GRAND LINE<span className="brand-sub">AN INTERACTIVE ATLAS</span>
             </span>
-            <Icon name="arrow" />
           </button>
-          <span className="scroll-hint">
-            <span className="mouse" />
-            SCROLL TO TRAVEL
-          </span>
-        </div>
-      </main>
-      <footer ref={dock} className="island-dock" id="landmarks" tabIndex={-1}>
-        <div className="dock-heading">
-          <span className="eyebrow">EXPLORE ALABASTA</span>
-          <span>Eight landmarks. Follow the coast, then head inland.</span>
-        </div>
-        <nav className="landmark-list" aria-label="Island landmarks" data-lenis-prevent>
-          {places.map((place, i) => (
-            <button
-              key={place.name}
-              className={`landmark ${selected === i ? 'active' : ''}`}
-              onClick={() => onSelect(i)}
-              onPointerEnter={() => setHover(i)}
-              onPointerLeave={() => setHover(null)}
-              onFocus={() => setHover(i)}
-              onBlur={() => setHover(null)}
-              aria-pressed={selected === i}
-            >
-              <span className="landmark-index">0{i + 1}</span>
-              <span className="landmark-name">
-                {place.name}
-                <span>{place.location}</span>
-              </span>
-              <span className="landmark-arrow">↗</span>
+          <nav aria-label="Main navigation">
+            <button className="nav-link" onClick={openWorld}>
+              <Icon name="map" />
+              The atlas
             </button>
-          ))}
-        </nav>
-        <div className="dock-bottom">
-          <span>A FAN-MADE JOURNEY THROUGH THE WORLD OF ONE PIECE</span>
-          <span>SCROLL · DISCOVER · REMEMBER</span>
-          <button onClick={() => setDialog('notes')}>CREDITS & REFERENCES ↗</button>
+            <button className="nav-link" onClick={() => setDialog('notes')}>
+              Field notes
+            </button>
+            <span className="nav-rule" />
+            <button
+              className="icon-button"
+              onClick={() => setDialog('settings')}
+              aria-label="Experience settings"
+            >
+              <Icon name="settings" />
+            </button>
+          </nav>
+        </header>
+        <main className="overlay">
+          {selected === null ? (
+            <>
+              <section className="intro" aria-labelledby="island-title">
+                <div className="chapter-kicker">
+                  <span className="small-rule" /> CHAPTER 01 <span className="dot">·</span> SANDY
+                  ISLAND
+                </div>
+                <h1 id="island-title" className="sr-only">
+                  Alabasta
+                </h1>
+                <div className="title-space" aria-hidden="true" />
+                <p className="intro-subtitle">A kingdom waiting for rain.</p>
+                <p className="intro-copy">
+                  Beyond the dunes, a promise still stands.
+                  <br />
+                  Follow the needle into the land of sand,
+                  <br />
+                  and the stories that changed its course.
+                </p>
+                <button className="journey-button" onClick={go}>
+                  Enter the kingdom{' '}
+                  <span>
+                    <Icon name="arrow" />
+                  </span>
+                </button>
+                <div className="island-meta">
+                  <span>GRAND LINE</span>
+                  <i />
+                  <span>ALABASTA ARC</span>
+                </div>
+              </section>
+              <div className="travel-caption">
+                <span className="eyebrow">THE DESERT KINGDOM</span>
+                <p>Every place holds a story.</p>
+                <span className="mono">Choose a landmark to look closer.</span>
+              </div>
+            </>
+          ) : (
+            <section className="story" aria-labelledby="story-title" data-lenis-prevent>
+              <button className="back-button" onClick={closeDetail}>
+                <Icon name="arrow" />
+                Return to the journey <kbd>ESC</kbd>
+              </button>
+              <span className="eyebrow">
+                0{selected + 1} <span className="dot">/</span> {places[selected].location}
+              </span>
+              <h2 id="story-title" tabIndex={-1} ref={detailHeading}>
+                {places[selected].name}
+              </h2>
+              <span className="story-rule" />
+              <p className="story-title">{island.incidents[selected].title}</p>
+              <p className="story-copy">{island.incidents[selected].description}</p>
+              <a
+                className="episode-link"
+                href={places[selected].source}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {selected === 7 ? '' : 'EPISODE '}
+                {island.incidents[selected].episodes}
+                <span>Official episode notes ↗</span>
+              </a>
+              {selected === 0 && (
+                <button
+                  className={`rain-story ${rain ? 'active' : ''}`}
+                  onClick={() => setRain((v) => !v)}
+                >
+                  <Icon name={rain ? 'sun' : 'rain'} />
+                  {rain ? 'Return to the desert sun' : 'Let the rain return'}
+                </button>
+              )}
+              <button
+                className="next-story"
+                onClick={() => onSelect((selected + 1) % places.length)}
+              >
+                Next landmark <Icon name="arrow" />
+              </button>
+            </section>
+          )}
+          <aside className="scene-aside">
+            <div className="location-stamp">
+              <span className="stamp-dot" />
+              <span>ALABASTA KINGDOM</span>
+            </div>
+            <div className="north">
+              <span>N</span>
+              <Icon name="compass" />
+              <span className="north-rule" />
+            </div>
+          </aside>
+          <div className="scene-controls">
+            <button
+              className={rain ? 'weather active' : 'weather'}
+              onClick={() => setRain((v) => !v)}
+              aria-pressed={rain}
+            >
+              <Icon name={rain ? 'rain' : 'sun'} />
+              <span>{rain ? 'The rain returns' : 'Desert sun'}</span>
+            </button>
+            <button className="merry-departure" onClick={openWorld}>
+              <Icon name="map" />
+              <span>
+                Set sail on the Going Merry<small>OPEN THE WORLD MAP</small>
+              </span>
+              <Icon name="arrow" />
+            </button>
+            <span className="scroll-hint">
+              <span className="mouse" />
+              SCROLL TO TRAVEL
+            </span>
+          </div>
+        </main>
+        <footer ref={dock} className="island-dock" id="landmarks" tabIndex={-1}>
+          <div className="dock-heading">
+            <span className="eyebrow">EXPLORE ALABASTA</span>
+            <span>Eight landmarks. Follow the coast, then head inland.</span>
+          </div>
+          <nav className="landmark-list" aria-label="Island landmarks" data-lenis-prevent>
+            {places.map((place, i) => (
+              <button
+                key={place.name}
+                className={`landmark ${selected === i ? 'active' : ''}`}
+                onClick={() => onSelect(i)}
+                onPointerEnter={() => setHover(i)}
+                onPointerLeave={() => setHover(null)}
+                onFocus={() => setHover(i)}
+                onBlur={() => setHover(null)}
+                aria-pressed={selected === i}
+              >
+                <span className="landmark-index">0{i + 1}</span>
+                <span className="landmark-name">
+                  {place.name}
+                  <span>{place.location}</span>
+                </span>
+                <span className="landmark-arrow">↗</span>
+              </button>
+            ))}
+          </nav>
+          <div className="dock-bottom">
+            <span>A FAN-MADE JOURNEY THROUGH THE WORLD OF ONE PIECE</span>
+            <span>SCROLL · DISCOVER · REMEMBER</span>
+            <button onClick={() => setDialog('notes')}>CREDITS & REFERENCES ↗</button>
+          </div>
+          <div className="journey-line" aria-hidden="true">
+            <span />
+          </div>
+        </footer>
+        <div className="scroll-track" aria-hidden="true" />
+        <div className="small-screen-note">
+          Designed for desktop. Open on a larger screen for the full journey.
         </div>
-        <div className="journey-line" aria-hidden="true">
-          <span />
-        </div>
-      </footer>
-      <div className="scroll-track" aria-hidden="true" />
-      <div className="small-screen-note">
-        Designed for desktop. Open on a larger screen for the full journey.
       </div>
-      <Loading ready={ready} />
-      {worldOpen && <WorldMap onClose={closeWorld} />}
+      <Loading ready={ready} destination={destination} mapReady={mapReady} />
+      {worldOpen && <WorldMap onClose={closeWorld} onReady={onMapReady} interactive={ready} />}
       <dialog
         ref={modal}
         className="atlas-dialog"
@@ -495,8 +522,9 @@ export default function App() {
               <span className="eyebrow">FROM THE CHART ROOM</span>
               <h2>Made for the journey.</h2>
               <p>
-                An independent fan-made atlas inspired by Eiichiro Oda’s One Piece. This first
-                island covers Alabasta before the timeskip.
+                An independent fan-made world atlas inspired by Eiichiro Oda’s One Piece. The chart
+                now spans all four seas and the New World through Elbaph. The Alabasta diorama
+                revisits the original desert-kingdom adventure.
               </p>
               <p>
                 The architecture is an original 3D interpretation based on anime references. The
@@ -506,6 +534,12 @@ export default function App() {
               <p>
                 Story summaries link to official episode notes and location references. One Piece
                 and its characters belong to their respective rights holders.
+              </p>
+              <p>
+                The atlas includes manga spoilers through Elbaph, with a content review dated 17
+                October 2026. Illustrated positions are not official geographic coordinates;
+                uncharted places stay in the directory. This is a curated atlas, not a live chapter
+                feed.
               </p>
               <div className="credits">
                 <a

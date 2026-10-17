@@ -1,13 +1,47 @@
 import { useEffect, useRef, useState } from 'react'
-import { chartPlaces, routePoints, type ChartPlace } from './atlas'
+import {
+  chartPlaces,
+  routePoints,
+  newWorldRoutePoints,
+  chartRegions,
+  atlasReviewDate,
+  atlasSources,
+  type ChartPlace,
+} from './atlas'
 import './world-map.css'
 
 type View = { x: number; y: number; scale: number }
 const WIDTH = 3000,
   HEIGHT = 1500
+const SOURCE_WIDTH = 14171,
+  SOURCE_HEIGHT = 7087,
+  TILE = 1024
+const tiles = Array.from(
+  { length: Math.ceil(SOURCE_WIDTH / TILE) * Math.ceil(SOURCE_HEIGHT / TILE) },
+  (_, i) => {
+    const col = i % Math.ceil(SOURCE_WIDTH / TILE),
+      row = Math.floor(i / Math.ceil(SOURCE_WIDTH / TILE))
+    return {
+      col,
+      row,
+      x: ((col * TILE) / SOURCE_WIDTH) * WIDTH,
+      y: ((row * TILE) / SOURCE_HEIGHT) * HEIGHT,
+      width: (Math.min(TILE, SOURCE_WIDTH - col * TILE) / SOURCE_WIDTH) * WIDTH,
+      height: (Math.min(TILE, SOURCE_HEIGHT - row * TILE) / SOURCE_HEIGHT) * HEIGHT,
+    }
+  },
+)
 const clamp = (v: number, low: number, high: number) => Math.min(high, Math.max(low, v))
 
-export default function WorldMap({ onClose }: { onClose: () => void }) {
+export default function WorldMap({
+  onClose,
+  onReady,
+  interactive,
+}: {
+  onClose: () => void
+  onReady: () => void
+  interactive: boolean
+}) {
   const modal = useRef<HTMLDialogElement>(null)
   const surface = useRef<HTMLDivElement>(null)
   const paper = useRef<HTMLDivElement>(null)
@@ -19,8 +53,12 @@ export default function WorldMap({ onClose }: { onClose: () => void }) {
     startY: number
     moved: boolean
   } | null>(null)
+  const [imageFailed, setImageFailed] = useState(false)
   const [zoom, setZoom] = useState(50)
+  const [visibleTiles, setVisibleTiles] = useState<typeof tiles>([])
   const [query, setQuery] = useState('')
+  const [region, setRegion] = useState('All seas')
+  const [kind, setKind] = useState('All places')
   const [selected, setSelected] = useState(chartPlaces.find((p) => p.id === 'alabasta')!)
   const [showRoute, setShowRoute] = useState(true)
   const commit = (next: View) => {
@@ -37,9 +75,34 @@ export default function WorldMap({ onClose }: { onClose: () => void }) {
       Math.max(80, el.clientHeight - HEIGHT * next.scale - 80),
     )
     view.current = next
-    paper.current.style.transform = `translate3d(${next.x}px,${next.y}px,0) scale(${next.scale})`
-    // Keep chart labels readable when the whole world is fitted on screen.
-    paper.current.style.setProperty('--label-scale', String(Math.max(0.65, 1 / next.scale)))
+    // Size the chart at its actual display resolution. Scaling a composited SVG
+    // layer magnifies its cached raster and blurs both the map and its labels.
+    Object.assign(paper.current.style, {
+      left: `${next.x}px`,
+      top: `${next.y}px`,
+      width: `${WIDTH * next.scale}px`,
+      height: `${HEIGHT * next.scale}px`,
+    })
+    const margin = (TILE / SOURCE_WIDTH) * WIDTH
+    const left = -next.x / next.scale - margin,
+      top = -next.y / next.scale - margin
+    const right = (el.clientWidth - next.x) / next.scale + margin
+    const bottom = (el.clientHeight - next.y) / next.scale + margin
+    const visible =
+      next.scale >= 0.8
+        ? tiles.filter(
+            (tile) =>
+              tile.x + tile.width >= left &&
+              tile.x <= right &&
+              tile.y + tile.height >= top &&
+              tile.y <= bottom,
+          )
+        : []
+    setVisibleTiles((previous) =>
+      previous.length === visible.length && previous.every((tile, i) => tile === visible[i])
+        ? previous
+        : visible,
+    )
     setZoom(Math.round(next.scale * 100))
   }
   const fit = () => {
@@ -56,7 +119,11 @@ export default function WorldMap({ onClose }: { onClose: () => void }) {
     const el = surface.current
     if (!el) return
     const old = view.current,
-      scale = clamp(old.scale * factor, 0.25, 1.8)
+      scale = clamp(
+        old.scale * factor,
+        Math.min(0.25, (el.clientWidth - 60) / WIDTH),
+        SOURCE_WIDTH / WIDTH / Math.max(1, devicePixelRatio),
+      )
     const cx = x ?? el.clientWidth / 2,
       cy = y ?? el.clientHeight / 2
     commit({
@@ -66,10 +133,14 @@ export default function WorldMap({ onClose }: { onClose: () => void }) {
     })
   }
   const findPlace = (place: ChartPlace) => {
+    if (place.id === 'alabasta') {
+      onClose()
+      return
+    }
     setSelected(place)
     setQuery('')
     const el = surface.current
-    if (el)
+    if (el && place.position !== 'unknown')
       commit({
         x: el.clientWidth / 2 - place.x * 0.9,
         y: el.clientHeight / 2 - place.y * 0.9,
@@ -77,7 +148,6 @@ export default function WorldMap({ onClose }: { onClose: () => void }) {
       })
   }
   useEffect(() => {
-    modal.current?.showModal()
     fit()
     const el = surface.current!
     const wheel = (event: WheelEvent) => {
@@ -91,17 +161,51 @@ export default function WorldMap({ onClose }: { onClose: () => void }) {
     return () => {
       el.removeEventListener('wheel', wheel)
       resize.disconnect()
-      modal.current?.close()
     }
   }, [])
+  useEffect(() => {
+    if (!interactive) return
+    surface.current?.focus({ preventScroll: true })
+    const key = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onClose()
+      }
+      if (event.key !== 'Tab') return
+      const controls = Array.from(
+        modal.current?.querySelectorAll<HTMLElement>('button, input, a[href], [tabindex="0"]') ??
+          [],
+      ).filter((el) => el.getClientRects().length > 0)
+      const first = controls[0],
+        last = controls[controls.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last?.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first?.focus()
+      }
+    }
+    window.addEventListener('keydown', key)
+    return () => window.removeEventListener('keydown', key)
+  }, [interactive, onClose])
+  const filteredPlaces = chartPlaces.filter(
+    (place) =>
+      (region === 'All seas' || place.sea === region) &&
+      (kind === 'All places' || (place.kind ?? 'Island / place') === kind),
+  )
   const matches = query.trim()
-    ? chartPlaces
-        .filter((p) => `${p.name} ${p.sea}`.toLowerCase().includes(query.toLowerCase()))
-        .slice(0, 7)
+    ? filteredPlaces.filter((p) =>
+        `${p.name} ${p.aliases ?? ''} ${p.sea}`.toLowerCase().includes(query.trim().toLowerCase()),
+      )
     : []
+  const mappedPlaces = filteredPlaces.filter((place) => place.position !== 'unknown')
   return (
     <dialog
       ref={modal}
+      open
+      inert={!interactive}
+      aria-modal="true"
       className="world-dialog"
       aria-labelledby="world-title"
       onCancel={(event) => {
@@ -113,10 +217,8 @@ export default function WorldMap({ onClose }: { onClose: () => void }) {
         <div>
           <span className="eyebrow">THE GRAND LINE ATLAS / WORLD CHART</span>
           <h1 id="world-title">An ocean of stories.</h1>
+          <span className="chart-edition">ALL ERAS / EAST BLUE TO ELBAPH / MANGA SPOILERS</span>
         </div>
-        <button className="chart-return" onClick={onClose}>
-          ← Return to Alabasta <kbd>ESC</kbd>
-        </button>
       </header>
       <div className="chart-layout">
         <aside className="chart-sidebar" data-lenis-prevent>
@@ -124,7 +226,7 @@ export default function WorldMap({ onClose }: { onClose: () => void }) {
             <label htmlFor="island-search">Find a place</label>
             <input
               id="island-search"
-              placeholder="Try Water 7 or Skypiea…"
+              placeholder="Try Wano, Elbaf or a kingdom…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               autoComplete="off"
@@ -144,6 +246,48 @@ export default function WorldMap({ onClose }: { onClose: () => void }) {
               </div>
             )}
           </div>
+          <div className="chart-filters">
+            <label>
+              Sea or region
+              <select
+                aria-label="Sea or region"
+                value={region}
+                onChange={(e) => setRegion(e.target.value)}
+              >
+                <option>All seas</option>
+                {chartRegions.map((sea) => (
+                  <option key={sea}>{sea}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Location type
+              <select
+                aria-label="Location type"
+                value={kind}
+                onChange={(e) => setKind(e.target.value)}
+              >
+                <option>All places</option>
+                <option value="Country">Countries & kingdoms</option>
+                <option>Marine base</option>
+                <option>Island / place</option>
+              </select>
+            </label>
+          </div>
+          <details className="chart-directory">
+            <summary>Browse {filteredPlaces.length} places</summary>
+            <div>
+              {filteredPlaces.map((place) => (
+                <button key={place.id} onClick={() => findPlace(place)}>
+                  {place.name}
+                  <small>
+                    {place.sea}
+                    {place.position === 'unknown' ? ' / Uncharted' : ''}
+                  </small>
+                </button>
+              ))}
+            </div>
+          </details>
           <div className="chart-entry" aria-live="polite">
             <span className="eyebrow">{selected.sea}</span>
             <div className={`island-sketch sketch-${selected.id}`} aria-hidden="true">
@@ -155,6 +299,14 @@ export default function WorldMap({ onClose }: { onClose: () => void }) {
             </div>
             <h2>{selected.name}</h2>
             <p>{selected.description}</p>
+            <div className="chart-place-meta">
+              <span>{selected.era ?? 'Before the timeskip'}</span>
+              <span>
+                {selected.position === 'unknown'
+                  ? 'Position unknown / not plotted'
+                  : 'Position follows the illustrated chart'}
+              </span>
+            </div>
             {selected.id === 'alabasta' ? (
               <button className="chart-enter" onClick={onClose}>
                 Explore the island <span>↗</span>
@@ -163,7 +315,10 @@ export default function WorldMap({ onClose }: { onClose: () => void }) {
               <span className="chart-status">Chart entry · 3D island to come</span>
             )}
             <a
-              href={`https://onepiece.fandom.com/wiki/${({ foosha: 'Foosha_Village', shells: 'Shells_Town', orange: 'Orange_Town', syrup: 'Syrup_Village', cocoyasi: 'Cocoyasi_Village', reverse: 'Reverse_Mountain', twin: 'Twin_Cape', whiskey: 'Whisky_Peak', garden: 'Little_Garden', drum: 'Drum_Island', 'long-ring': 'Long_Ring_Long_Land', 'water-seven': 'Water_7', 'enies-lobby': 'Enies_Lobby', thriller: 'Thriller_Bark', sabaody: 'Sabaody_Archipelago', amazon: 'Amazon_Lily', impel: 'Impel_Down', mariejois: 'Mary_Geoise', fishman: 'Fish-Man_Island' } as Record<string, string>)[selected.id] ?? selected.name.replaceAll(' ', '_')}`}
+              href={
+                selected.source ??
+                `https://onepiece.fandom.com/wiki/${({ foosha: 'Foosha_Village', shells: 'Shells_Town', orange: 'Orange_Town', syrup: 'Syrup_Village', cocoyasi: 'Cocoyasi_Village', reverse: 'Reverse_Mountain', twin: 'Twin_Cape', whiskey: 'Whisky_Peak', garden: 'Little_Garden', drum: 'Drum_Island', 'long-ring': 'Long_Ring_Long_Land', 'water-seven': 'Water_7', 'enies-lobby': 'Enies_Lobby', thriller: 'Thriller_Bark', sabaody: 'Sabaody_Archipelago', amazon: 'Amazon_Lily', impel: 'Impel_Down', mariejois: 'Mary_Geoise', fishman: 'Fish-Man_Island' } as Record<string, string>)[selected.id] ?? encodeURIComponent(selected.name.replaceAll(' ', '_'))}`
+              }
               target="_blank"
               rel="noreferrer"
             >
@@ -172,8 +327,15 @@ export default function WorldMap({ onClose }: { onClose: () => void }) {
           </div>
           <div className="chart-log">
             <span className="eyebrow">ON THE CHART</span>
-            <strong>25 places. Four seas.</strong>
-            <p>A pre-timeskip voyage, from the East Blue to the gates of the New World.</p>
+            <strong>{chartPlaces.length} places. Four seas.</strong>
+            <p>
+              From the four Blues to the New World. Story coverage includes Wano, Egghead and
+              Elbaph. Manga spoilers included.
+            </p>
+            <p>Reviewed {atlasReviewDate}. Story summaries are curated, not a live chapter feed.</p>
+            <a href={atlasSources.current} target="_blank" rel="noreferrer">
+              Official One Piece updates ↗
+            </a>
           </div>
         </aside>
         <div
@@ -228,162 +390,81 @@ export default function WorldMap({ onClose }: { onClose: () => void }) {
             surface.current?.classList.remove('is-dragging')
           }}
         >
+          <img
+            className="chart-preload"
+            src="/maps/onepiece-world.jpg"
+            alt=""
+            onLoad={onReady}
+            onError={() => {
+              setImageFailed(true)
+              onReady()
+            }}
+          />
+          {imageFailed && (
+            <div className="chart-error" role="alert">
+              The world chart could not load.{' '}
+              <button onClick={() => location.reload()}>Retry</button>
+              <button onClick={onClose}>Explore Alabasta</button>
+            </div>
+          )}
           <div ref={paper} className="chart-paper">
-            <svg className="chart-geography" viewBox={`0 0 ${WIDTH} ${HEIGHT}`} aria-hidden="true">
-              <defs>
-                <pattern id="chart-grid" width="100" height="100" patternUnits="userSpaceOnUse">
-                  <path
-                    d="M100 0H0V100"
-                    fill="none"
-                    stroke="#638b87"
-                    strokeWidth="1"
-                    opacity=".24"
-                  />
-                </pattern>
-                <pattern id="belt-lines" width="18" height="18" patternUnits="userSpaceOnUse">
-                  <path d="m0 18 18-18" stroke="#9ab49e" strokeWidth="1" opacity=".45" />
-                </pattern>
-                <pattern id="red-rock" width="35" height="50" patternUnits="userSpaceOnUse">
-                  <path
-                    d="m0 30 18-20 17 30M8 50l15-20"
-                    fill="none"
-                    stroke="#9c5b48"
-                    strokeWidth="1.5"
-                    opacity=".5"
-                  />
-                </pattern>
-              </defs>
-              <rect width="3000" height="1500" fill="#c5d4c8" />
-              <rect y="595" width="3000" height="300" fill="#7faaa5" />
-              <path d="M0 540H3000V595H0ZM0 895H3000V1175H0Z" fill="url(#belt-lines)" />
-              <path
-                d="M0 595H3000M0 895H3000"
-                stroke="#517c78"
-                strokeWidth="2"
-                strokeDasharray="12 8"
+            <img
+              className="chart-geography chart-overview"
+              src="/maps/onepiece-world.jpg"
+              alt=""
+              draggable={false}
+            />
+            {visibleTiles.map((tile) => (
+              <img
+                key={`${tile.col}-${tile.row}`}
+                className="chart-tile"
+                src={`/maps/tiles/${tile.col}-${tile.row}.png`}
+                alt=""
+                draggable={false}
+                style={{
+                  left: `${(tile.x / WIDTH) * 100}%`,
+                  top: `${(tile.y / HEIGHT) * 100}%`,
+                  width: `${(tile.width / WIDTH) * 100}%`,
+                  height: `${(tile.height / HEIGHT) * 100}%`,
+                }}
               />
-              <rect width="3000" height="1500" fill="url(#chart-grid)" />
-              {[390, 2400].map((x, i) => (
-                <g key={x}>
-                  <path
-                    d={`M${x - 48} 0l22 115-28 110 16 140-12 135 17 140-19 100 17 140-23 130 22 120-9 140 14 135h72l-10-140 23-145-18-100 14-145-18-125 15-130-19-140 14-125-17-120 22-130-13-100Z`}
-                    fill="#c8876a"
-                    stroke="#985d4b"
-                    strokeWidth="3"
-                  />
-                  <rect x={x - 25} width="50" height="1500" fill="url(#red-rock)" />
-                  <text
-                    x={x + 8}
-                    y={i ? 255 : 1130}
-                    transform={`rotate(-90 ${x + 8} ${i ? 255 : 1130})`}
-                    className="chart-red-label"
-                  >
-                    RED LINE
-                  </text>
-                </g>
-              ))}
-              <g className="sea-names">
-                <text x="150" y="235">
-                  NORTH BLUE
-                </text>
-                <text x="1440" y="120">
-                  EAST BLUE
-                </text>
-                <text x="2740" y="240">
-                  NORTH BLUE
-                </text>
-                <text x="160" y="1330">
-                  WEST BLUE
-                </text>
-                <text x="1330" y="1370">
-                  SOUTH BLUE
-                </text>
-                <text x="2730" y="1330">
-                  WEST BLUE
-                </text>
-              </g>
-              <text x="1080" y="590" className="belt-label">
-                CALM BELT
-              </text>
-              <text x="1120" y="1120" className="belt-label">
-                CALM BELT
-              </text>
-              <text x="1170" y="958" className="grand-label">
-                G R A N D L I N E
-              </text>
-              <text x="1190" y="995" className="belt-label">
-                PARADISE · FIRST HALF
-              </text>
-              <text x="2750" y="710" className="grand-label">
-                NEW WORLD
-              </text>
-              <text x="2750" y="760" className="belt-label">
-                BEYOND THIS VOYAGE
-              </text>
+            ))}
+            <svg className="chart-geography" viewBox={`0 0 ${WIDTH} ${HEIGHT}`} aria-hidden="true">
               {showRoute && (
-                <g>
+                <>
                   <polyline
                     points={routePoints}
                     fill="none"
-                    stroke="#a34f37"
-                    strokeWidth="3"
-                    strokeDasharray="8 8"
+                    stroke="#ffe5a3"
+                    strokeWidth="2.5"
+                    strokeDasharray="7 5"
+                    opacity=".85"
                   />
-                  <path
-                    d="M1400 710L1435 505M1760 715L1780 990M2150 700L1930 1130L2210 1150L2230 940"
+                  <polyline
+                    className="new-world-route"
+                    points={newWorldRoutePoints}
                     fill="none"
-                    stroke="#a34f37"
-                    strokeWidth="2"
-                    strokeDasharray="5 9"
-                    opacity=".65"
+                    stroke="#f4ad83"
+                    strokeWidth="2.5"
+                    strokeDasharray="7 5"
+                    opacity=".9"
                   />
-                </g>
+                </>
               )}
-              {chartPlaces
-                .filter((p) => !['reverse', 'mariejois', 'fishman', 'baratie'].includes(p.id))
-                .map((p, i) => (
-                  <g
-                    key={p.id}
-                    transform={`translate(${p.x} ${p.y}) rotate(${((i * 37) % 80) - 40})`}
-                  >
-                    <path
-                      d="M-31 1Q-45-20-14-27L5-39 25-25Q43-27 39-7L49 8 27 22 7 19Q-19 37-35 18Z"
-                      fill={p.id === 'alabasta' ? '#dfbc7d' : '#dfd7b5'}
-                      stroke="#6f8a73"
-                      strokeWidth="2"
-                    />
-                    <path
-                      d="m-18 9 13-21 11 15 8-9 13 20"
-                      fill="none"
-                      stroke="#8f9874"
-                      strokeWidth="2"
-                    />
-                  </g>
-                ))}
-              <g transform="translate(2720 390)" stroke="#527672" fill="none">
-                <circle r="80" />
-                <circle r="68" strokeDasharray="2 8" />
-                <path d="M0-110V110M-110 0H110M-65-65 65 65M-65 65 65-65" />
-                <path d="M0-85 17 0 0 85-17 0Z" fill="#527672" />
-                <path d="M-85 0 0-17 85 0 0 17Z" fill="#dce1cd" />
-                <text y="-125" textAnchor="middle" fill="#527672" stroke="none" fontSize="25">
-                  N
-                </text>
-              </g>
             </svg>
-            {chartPlaces.map((p) => (
+            {mappedPlaces.map((p) => (
               <button
                 key={p.id}
                 className={`chart-place ${selected.id === p.id ? 'selected' : ''} ${p.id === 'alabasta' ? 'current' : ''}`}
-                style={{ left: p.x, top: p.y }}
-                onClick={() => setSelected(p)}
+                style={{ left: `${(p.x / WIDTH) * 100}%`, top: `${(p.y / HEIGHT) * 100}%` }}
+                onClick={() => (p.id === 'alabasta' ? onClose() : setSelected(p))}
                 aria-label={`View ${p.name}`}
                 aria-pressed={selected.id === p.id}
               >
                 <span className="chart-pin" />
                 <span className="chart-place-label">
                   {p.name}
-                  {p.id === 'alabasta' && <small>YOU ARE HERE</small>}
+                  {p.id === 'alabasta' && <small>EXPLORE IN 3D</small>}
                 </span>
               </button>
             ))}
@@ -410,8 +491,8 @@ export default function WorldMap({ onClose }: { onClose: () => void }) {
         </div>
       </div>
       <footer className="chart-footer">
-        <span>ILLUSTRATED ROUTE CHART · POSITIONS & DISTANCES ARE SCHEMATIC</span>
-        <span>THE GOING MERRY’S CHART ROOM</span>
+        <span>ONEPIECE15 MAP · LOCATIONS ALIGNED TO THE SUPPLIED CHART</span>
+        <span>A VOYAGE THROUGH EVERY ERA</span>
       </footer>
     </dialog>
   )

@@ -1,4 +1,5 @@
 .world-dialog {
+  z-index: 60;
   position: fixed;
   inset: 0;
   width: 100vw;
@@ -31,10 +32,6 @@
     serif;
   margin: 9px 0 0;
 }
-.chart-return {
-  font-size: 15px;
-  padding: 14px 0;
-}
 .chart-layout {
   display: flex;
   flex: 1;
@@ -66,6 +63,8 @@
   padding: 12px;
 }
 .chart-results {
+  max-height: 280px;
+  overflow-y: auto;
   position: absolute;
   top: 79px;
   left: 0;
@@ -176,9 +175,11 @@
   width: 3000px;
   height: 1500px;
   position: absolute;
-  transform-origin: 0 0;
-  will-change: transform;
   user-select: none;
+}
+.chart-tile {
+  position: absolute;
+  pointer-events: none;
 }
 .chart-geography {
   position: absolute;
@@ -219,17 +220,17 @@
 }
 .chart-place {
   position: absolute;
-  width: 26px;
-  height: 26px;
+  width: 18px;
+  height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transform: translate(-50%, -50%) scale(var(--label-scale, 1));
+  transform: translate(-50%, -50%);
   overflow: visible;
 }
 .chart-pin {
-  width: 11px;
-  height: 11px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   border: 2px solid #ecdfba;
   background: #355d55;
@@ -237,6 +238,8 @@
   flex-shrink: 0;
 }
 .chart-place-label {
+  opacity: 0;
+  pointer-events: none;
   position: absolute;
   top: 28px;
   left: 50%;
@@ -259,6 +262,8 @@
   margin-top: 2px;
 }
 .chart-place.current .chart-pin {
+  width: 12px;
+  height: 12px;
   background: #b1633c;
   box-shadow:
     0 0 0 5px #c3804b30,
@@ -269,6 +274,32 @@
 }
 .chart-place.selected {
   z-index: 3;
+}
+.chart-place.selected:not(.current) .chart-place-label,
+.chart-place:hover .chart-place-label,
+.chart-place:focus-visible .chart-place-label {
+  opacity: 1;
+}
+.chart-place:focus-visible {
+  z-index: 4;
+}
+.chart-preload {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.chart-error {
+  position: absolute;
+  z-index: 10;
+  inset: 25% 10% auto;
+  padding: 24px;
+  background: #f0ead9;
+}
+.chart-error button {
+  display: block;
+  margin-top: 16px;
 }
 .chart-place.selected .chart-place-label,
 .chart-place:hover .chart-place-label {
@@ -362,5 +393,105 @@
   }
   .chart-log {
     display: none;
+  }
+}
+.chart-edition {
+  display: block;
+  font:
+    10px 'IBM Plex Mono',
+    monospace;
+  letter-spacing: 2px;
+  margin-top: 8px;
+  color: #8b6746;
+}
+.chart-filters {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+.chart-filters label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+}
+.chart-filters select {
+  width: 100%;
+  padding: 9px;
+  background: #f7f2e6;
+  color: #254d4a;
+  border: 1px solid #9daa99;
+  font: inherit;
+}
+.chart-directory {
+  margin: 20px 0 0;
+  border-block: 1px solid #b5bca9;
+  padding: 12px 0;
+  font-size: 13px;
+}
+.chart-directory summary {
+  cursor: pointer;
+}
+.chart-directory > div {
+  max-height: 240px;
+  overflow: auto;
+  margin-top: 10px;
+}
+.chart-directory button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 6px;
+  border-bottom: 1px solid #d3d4c4;
+}
+.chart-directory button:hover {
+  background: #dce2cc;
+}
+.chart-directory small {
+  display: block;
+  font-size: 10px;
+  color: #667e73;
+  margin-top: 3px;
+}
+.chart-place-meta {
+  display: grid;
+  gap: 6px;
+  font:
+    10px/1.5 'IBM Plex Mono',
+    monospace;
+  color: #718075;
+  margin: 0 0 18px;
+}
+.chart-log a {
+  font-size: 12px;
+}
+.chart-header {
+  min-height: 126px;
+  height: auto;
+}
+.chart-entry .island-sketch {
+  display: none;
+}
+@media (max-width: 720px) {
+  .chart-sidebar {
+    width: 220px;
+    padding: 16px;
+  }
+  .chart-header {
+    padding: 16px;
+  }
+  .chart-header h1 {
+    font-size: 23px;
+  }
+  .chart-footer {
+    font-size: 8px;
+    padding: 8px;
+  }
+  .chart-footer span:last-child,
+  .chart-drag-hint {
+    display: none;
+  }
+  .chart-tools {
+    bottom: 12px;
+    right: 12px;
   }
 }

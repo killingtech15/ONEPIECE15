@@ -24,7 +24,7 @@ The narrative descriptions are original short summaries, not copied episode text
 - [Sandora River](https://onepiece.fandom.com/wiki/Sandora_River), [Erumalu](https://onepiece.fandom.com/wiki/Erumalu), [Katorea](https://onepiece.fandom.com/wiki/Katorea): secondary references for the inland route, ruined oasis and rebel relocation.
 - [Red Line](https://onepiece.fandom.com/wiki/Red_Line), [Grand Line](https://onepiece.fandom.com/wiki/Grand_Line), [Calm Belt](https://onepiece.fandom.com/wiki/Calm_Belt): secondary world-geography references. Each selectable chart location also links to its individual reference.
 
-The SVG world chart, coast outlines, symbols and route artwork are original code-native assets. No third-party fan map is copied or shipped. It is explicitly an unfolded route schematic, not an assertion of canonical coordinates, distances or island shapes. Alabasta is the only implemented 3D island; the other 24 places have informational entries.
+The world-chart illustration is the user-supplied [OnePiece15 Map.png](../OnePiece15%20Map.png), used at the user's request. The app ships an overview and lossless full-resolution tiles derived from that image, preserving its artwork and embedded attribution. The illustration's authorship is not claimed by this project. Interactive pins are traced to its locations; the optional route overlay and navigation controls are authored for this app. Alabasta is the only implemented 3D island; the remaining locations have informational entries. Uncharted destinations are listed without pins.
 
 ## Environment
 
@@ -39,3 +39,18 @@ Blender is used only as a development asset tool. Its executable is not included
 ## Investigated but not used
 
 [Alabasta Harbor by Cyrone](https://sketchfab.com/3d-models/alabasta-harbor-f28d97d8380e497b9e3b705c8049e23e) was listed with a Creative Commons Attribution license. It was not downloaded or incorporated because this milestone centers on the capital.
+
+
+## Expanded atlas review — 17 October 2026
+
+The illustration supplies names and marker positions across all four seas, Paradise, and the New World. An illustrated position is not a claim of a confirmed manga coordinate. Incidental places have chart descriptions instead of invented histories. Laugh Tale, All Blue, the Great Kingdom, Emerald City, Nakrowa, and Dias are directory-only entries with unknown positions. Merveille is identified as a film location. Moving places such as Zou, Germa, and Weatheria use illustrative positions.
+
+Story descriptions include manga spoilers. New World coverage reaches Elbaph, using a dated review rather than an unsupported promise of chapter-by-chapter currency. Sources checked:
+
+- [Official Egghead summary](https://one-piece.com/story/egghead/index.html): Egghead, Kuma and Bonney, the broadcast and escape, and the Nefertari connection.
+- [Official Dressrosa summary](https://one-piece.com/story/dressrosa/index.html): the liberation and Grand Fleet.
+- [Official Elbaph / Warland material dated 9 October 2026](https://one-piece.com/news/82672/index.html): current arc, Warland and Loki.
+- [Official news index](https://one-piece.com/news/index.html): ongoing publication context; preview notices are not treated as released chapters.
+- [Location directory](https://onepiece.fandom.com/wiki/List_of_Locations): naming, aliases, and unknown-position distinctions, cross-checked against the user-supplied illustration.
+
+The voyage loader is original SVG/CSS artwork. Clouds drift at different speeds, the ship travels and bobs, and layered waves move beneath it. Reduced-motion mode keeps a static scene and short transitions; animations pause while the overlay is hidden.

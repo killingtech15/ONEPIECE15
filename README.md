@@ -1,6 +1,6 @@
 # ONEPIECE15 · Grand Line Atlas
 
-A desktop-first, interactive Alabasta diorama. First milestone for a pre-timeskip One Piece world atlas. The project is local-only for now; no hosting or deployment has been configured.
+A desktop-first world atlas that opens on the supplied OnePiece15 map. Select Alabasta to enter its interactive 3D diorama. The project is local-only for now; no hosting or deployment has been configured.
 
 ## Run
 
@@ -15,12 +15,13 @@ Open the URL printed by Vite. `npm run build` creates the static production site
 
 ## Explore
 
+- The world map opens first. Click **Alabasta** on the chart or in search results to enter the existing island model. The animated sea, clouds and travelling-ship transition plays on initial load and between the map and island scenes. Landmark stories open and close without a loading transition.
 - Scroll or select **Enter the kingdom** to follow the curved camera route.
 - Hover over a map marker or its bottom navigation entry to animate that landmark.
 - Select a landmark to stop scrolling and move the camera closer. **Escape** or **Return to the journey** restores the previous route position.
 - Visit eight landmarks: the royal palace, clock tower, Rain Dinners, Sandora River, Nanohana, Yuba, Erumalu and Katorea. Each stop has a short story and a source link.
 - Toggle **Desert sun** / **The rain returns** to change the atmosphere.
-- Board the **Going Merry** at Nanohana's arrival waterfront (or select **The atlas**) to open the world chart. Pan, zoom, search 25 places, toggle the Straw Hat route, and return to the same Alabasta journey position. Arrow keys pan the chart; +/− zoom. The other locations currently have chart entries, not 3D scenes.
+- Board the **Going Merry** at Nanohana's arrival waterfront (or select **The atlas**) to open the world chart. Pan, zoom, search the expanded world directory, toggle the Straw Hat route, and return to the same Alabasta journey position. Arrow keys pan the chart; +/− zoom. The other locations currently have chart entries, not 3D scenes.
 - Open **Field notes** for references or **Experience settings** for reduced motion and rendering quality.
 - Keyboard users can reach every landmark through the bottom navigation. Reduced-motion preferences are respected on initial load.
 
@@ -42,7 +43,13 @@ React 19, TypeScript, Vite, React Three Fiber, Drei, Three.js, GSAP, Lenis and p
 
 This is an original stylized interpretation, **not an exact anime reconstruction or a geographically accurate world map**. Alubarna, Rainbase and the coast are compressed into one navigable scene. The ship is a simplified visual suggestion, not a detailed character asset. No ripped game models or AI-generated bitmap artwork are included.
 
-The island has eight landmarks, not exhaustive arc coverage. The world chart is an unfolded schematic with the four Blues, Red Line, Grand Line and Calm Belts; coordinates, sizes and distances are illustrative. Story content stops before the timeskip. Mobile polish, additional 3D islands, audio, character models and deployment remain future work.
+The island has eight landmarks, not exhaustive arc coverage. The world chart uses the user-supplied [OnePiece15 Map.png](OnePiece15%20Map.png); the expanded location directory spans the four Blues, Paradise, the New World and uncharted destinations. Country and sea filters make the chart searchable. Locations with unknown positions have directory entries without fabricated pins. Story coverage includes manga spoilers through Elbaph, reviewed 17 October 2026; it is not a live chapter feed. Only Alabasta has a 3D island model. Mobile polish, additional 3D islands, audio, character models and deployment remain future work.
+
+### Map image quality
+
+The overview uses a 7000px preview. Zoomed views load only nearby 1024px lossless PNG tiles cut directly from the original 14171 × 7087 image. The chart is laid out at its actual display size rather than scaling a cached GPU layer, keeping labels sharp. Maximum zoom is limited to the source resolution for the display's pixel density. The tiles total about 61 MB on disk, but are requested only around the visible area after zooming in.
+
+Rebuild the full-resolution tiles with `powershell -ExecutionPolicy Bypass -File scripts/build-map.ps1` after replacing the source map. If the source dimensions change, update the dimensions and marker positions in the chart code too.
 
 The supplied schema is preserved in [src/world.json](src/world.json); landmark view offsets and references live in [src/world.ts](src/world.ts). See [the original specification](docs/original-spec.md), [art direction](docs/ART-DIRECTION.md) and [credits](docs/CREDITS.md).
 
