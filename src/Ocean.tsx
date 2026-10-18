@@ -40,6 +40,7 @@ uniform float uNear;
 uniform float uFar;
 uniform float uTime;
 uniform float uRain;
+uniform vec2 uFogRange;
 uniform vec3 uDeep;
 uniform vec3 uShallow;
 uniform vec3 uSkyColor;
@@ -61,7 +62,7 @@ void main() {
   float ripple = sin(vWorld.x*.55+vWorld.z*.9+sin(vWorld.x*.18-vWorld.z*.25)*2.+uTime*.65);
   col += smoothstep(.91,1.,ripple)*.018;
   col = mix(col,col*vec3(.79,.88,.97),uRain*.4);
-  float fog = smoothstep(100.,210.,vDepth);
+  float fog = smoothstep(uFogRange.x,uFogRange.y,vDepth);
   col = mix(vec3(.85,.84,.76),col,smoothstep(.05,.52,gl_FragCoord.x/uResolution.x));
   gl_FragColor=vec4(col,1.);
   #include <tonemapping_fragment>
@@ -71,7 +72,15 @@ void main() {
   gl_FragColor.rgb = mix(gl_FragColor.rgb,uSkyColor,fog);
 }`
 
-export function Ocean({ reduced, rain }: { reduced: boolean; rain: boolean }) {
+export function Ocean({
+  reduced,
+  rain,
+  wide = false,
+}: {
+  reduced: boolean
+  rain: boolean
+  wide?: boolean
+}) {
   const mesh = useRef<T.Mesh>(null!)
   const { size, gl, camera } = useThree()
   const depthWidth = Math.min(1600, Math.ceil(size.width * gl.getPixelRatio()))
@@ -93,13 +102,18 @@ export function Ocean({ reduced, rain }: { reduced: boolean; rain: boolean }) {
       uNear: { value: 0.1 },
       uFar: { value: 400 },
       uRain: { value: 0 },
+      uFogRange: { value: new T.Vector2(wide ? 800 : 100, wide ? 1700 : 210) },
       uDeep: { value: new T.Color('#0077b6') },
       uShallow: { value: new T.Color('#58b7bd') },
       uSkyColor: { value: new T.Vector3(188 / 255, 216 / 255, 219 / 255) },
     }),
-    [depth],
+    [depth, wide],
   )
-  const geo = useMemo(() => new T.PlaneGeometry(1000, 1000, 144, 144).rotateX(-Math.PI / 2), [])
+  const geo = useMemo(
+    () =>
+      new T.PlaneGeometry(wide ? 2400 : 1000, wide ? 2400 : 1000, 144, 144).rotateX(-Math.PI / 2),
+    [wide],
+  )
   useFrame((state, dt) => {
     if (!reduced) uniforms.uTime.value += Math.min(dt, 0.05)
     uniforms.uAmplitude.value = reduced ? 0 : 1

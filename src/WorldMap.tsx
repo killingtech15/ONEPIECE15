@@ -35,10 +35,12 @@ const clamp = (v: number, low: number, high: number) => Math.min(high, Math.max(
 
 export default function WorldMap({
   onClose,
+  onEnterIsland,
   onReady,
   interactive,
 }: {
   onClose: () => void
+  onEnterIsland: (id: 'alabasta' | 'water-7') => void
   onReady: () => void
   interactive: boolean
 }) {
@@ -136,8 +138,8 @@ export default function WorldMap({
     })
   }
   const findPlace = (place: ChartPlace) => {
-    if (place.id === 'alabasta') {
-      onClose()
+    if (place.id === 'alabasta' || place.id === 'water-seven') {
+      onEnterIsland(place.id === 'alabasta' ? 'alabasta' : 'water-7')
       return
     }
     setSelected(place)
@@ -322,8 +324,13 @@ export default function WorldMap({
                   : 'Position follows the illustrated chart'}
               </span>
             </div>
-            {selected.id === 'alabasta' ? (
-              <button className="chart-enter" onClick={onClose}>
+            {['alabasta', 'water-seven'].includes(selected.id) ? (
+              <button
+                className="chart-enter"
+                onClick={() =>
+                  onEnterIsland(selected.id === 'water-seven' ? 'water-7' : 'alabasta')
+                }
+              >
                 Explore the island <span>↗</span>
               </button>
             ) : (
@@ -458,7 +465,7 @@ export default function WorldMap({
             <div className="chart-error" role="alert">
               The world chart could not load.{' '}
               <button onClick={() => location.reload()}>Retry</button>
-              <button onClick={onClose}>Explore Alabasta</button>
+              <button onClick={() => onEnterIsland('alabasta')}>Explore Alabasta</button>
             </div>
           )}
           <div ref={paper} className="chart-paper">
@@ -509,10 +516,11 @@ export default function WorldMap({
             {mappedPlaces.map((p) => (
               <button
                 key={p.id}
-                className={`chart-place ${selected.id === p.id ? 'selected' : ''} ${p.id === 'alabasta' ? 'current' : ''}`}
+                className={`chart-place ${selected.id === p.id ? 'selected' : ''} ${['alabasta', 'water-seven'].includes(p.id) ? 'current' : ''}`}
                 style={{ left: `${(p.x / WIDTH) * 100}%`, top: `${(p.y / HEIGHT) * 100}%` }}
                 onClick={() => {
-                  if (p.id === 'alabasta') onClose()
+                  if (p.id === 'alabasta' || p.id === 'water-seven')
+                    onEnterIsland(p.id === 'alabasta' ? 'alabasta' : 'water-7')
                   else {
                     setSelected(p)
                     setBrowseOpen(true)
@@ -524,7 +532,7 @@ export default function WorldMap({
                 <span className="chart-pin" />
                 <span className="chart-place-label">
                   {p.name}
-                  {p.id === 'alabasta' && <small>EXPLORE IN 3D</small>}
+                  {['alabasta', 'water-seven'].includes(p.id) && <small>EXPLORE IN 3D</small>}
                 </span>
               </button>
             ))}

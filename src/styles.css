@@ -1868,3 +1868,8 @@ kbd {
     display: none;
   }
 }
+/* Water 7's overview keeps the introductory copy unobstructed. */
+.is-water7:not(.has-departed):not(.is-exploring) .marker-layer {
+  display: none;
+  pointer-events: none;
+}

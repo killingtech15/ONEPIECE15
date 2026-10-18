@@ -14,7 +14,8 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Scene, { MarkerButtons } from './Scene'
 import WorldMap from './WorldMap'
 import Loading from './VoyageLoading'
-import { island, places, travel } from './world'
+import { travel } from './world'
+import { IslandContext, islands, type IslandId } from './IslandContext'
 
 gsap.registerPlugin(ScrollTrigger)
 type IconName = 'compass' | 'arrow' | 'rain' | 'sun' | 'settings' | 'close' | 'map'
@@ -73,7 +74,7 @@ function Icon({ name, className = '' }: { name: IconName; className?: string }) 
 }
 
 class SceneBoundary extends Component<
-  { children: ReactNode; onError: () => void },
+  { children: ReactNode; onError: () => void; sceneId: string },
   { failed: boolean }
 > {
   state = { failed: false }
@@ -82,6 +83,10 @@ class SceneBoundary extends Component<
   }
   componentDidCatch() {
     this.props.onError()
+  }
+  componentDidUpdate(previous: { sceneId: string }) {
+    if (previous.sceneId !== this.props.sceneId && this.state.failed)
+      this.setState({ failed: false })
   }
   render() {
     return this.state.failed ? (
@@ -102,6 +107,11 @@ class SceneBoundary extends Component<
   }
 }
 export default function App() {
+  const [activeIsland, setActiveIsland] = useState<IslandId>('alabasta')
+  const config = islands[activeIsland]
+  const { island, places } = config
+  const isWater = activeIsland === 'water-7'
+  const savedScroll = useRef<Record<string, number>>({})
   const [selected, setSelected] = useState<number | null>(null)
   const [hover, setHover] = useState<number | null>(null)
   const [sceneReady, setSceneReady] = useState(false)
@@ -118,6 +128,9 @@ export default function App() {
   const [quality, setQuality] = useState(false)
   const [worldOpen, setWorldOpen] = useState(true)
   const ready = !transitioning && (worldOpen ? mapReady : sceneReady)
+  useEffect(() => {
+    document.title = `${worldOpen ? 'World Map' : island.name} — Grand Line Atlas`
+  }, [worldOpen, island.name])
   const navigate = useCallback(
     (change: () => void, label: string) => {
       if (navigating.current) return
@@ -145,20 +158,34 @@ export default function App() {
   const worldReturnFocus = useRef<HTMLElement | null>(null)
   const openWorld = useCallback(() => {
     if (worldOpen) return
+    savedScroll.current[activeIsland] = window.scrollY
     worldReturnFocus.current =
       document.activeElement instanceof HTMLButtonElement
         ? document.activeElement
         : document.querySelector('.merry-marker')
     navigate(() => setWorldOpen(true), 'WORLD CHART')
-  }, [navigate, worldOpen])
-  const closeWorld = useCallback(() => {
-    if (!worldOpen) return
-    navigate(() => {
-      setIslandMounted(true)
-      setWorldOpen(false)
-      requestAnimationFrame(() => worldReturnFocus.current?.focus({ preventScroll: true }))
-    }, 'ALABASTA')
-  }, [navigate, worldOpen])
+  }, [navigate, worldOpen, activeIsland])
+  const enterIsland = useCallback(
+    (id: IslandId) => {
+      if (!worldOpen) return
+      navigate(() => {
+        if (id !== activeIsland) {
+          setSceneReady(false)
+          setSelected(null)
+          setHover(null)
+          setRain(false)
+          setActiveIsland(id)
+          window.scrollTo(0, savedScroll.current[id] ?? 0)
+          ScrollTrigger.update()
+        }
+        setIslandMounted(true)
+        setWorldOpen(false)
+        requestAnimationFrame(() => worldReturnFocus.current?.focus({ preventScroll: true }))
+      }, islands[id].title)
+    },
+    [navigate, worldOpen, activeIsland],
+  )
+  const closeWorld = useCallback(() => enterIsland(activeIsland), [enterIsland, activeIsland])
   const [markerLayer, setMarkerLayer] = useState<HTMLDivElement | null>(null)
   const dock = useRef<HTMLElement>(null)
   const [dialog, setDialog] = useState<'settings' | 'notes' | null>(null)
@@ -285,320 +312,344 @@ export default function App() {
     lenis.current?.scrollTo(window.innerHeight * 1.05, { duration: reduced ? 0 : 1.4 })
 
   return (
-    <div
-      ref={root}
-      className={`app ${departed ? 'has-departed' : ''} ${selected !== null ? 'is-exploring' : ''} ${reduced ? 'reduced-motion' : ''}`}
-    >
-      <div inert={worldOpen || !ready} aria-hidden={worldOpen || undefined}>
-        <a className="skip-link" href="#landmarks">
-          Skip to island landmarks
-        </a>
-        <div className="scene" aria-label="Interactive 3D diorama of Alabasta">
-          {islandMounted && (
-            <SceneBoundary onError={onReady}>
-              <Canvas
-                frameloop={worldOpen ? 'never' : 'always'}
-                dpr={quality ? [1, 1.25] : 1}
-                gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
-              >
-                <Suspense fallback={null}>
-                  <Scene
-                    selected={selected}
-                    hover={hover}
-                    reduced={reduced}
-                    rain={rain}
-                    quality={quality}
-                    onSelect={onSelect}
-                    onHover={setHover}
-                    onReady={onReady}
-                    markerLayer={markerLayer}
-                    onWorldMap={openWorld}
-                  />
-                </Suspense>
-              </Canvas>
-            </SceneBoundary>
-          )}
-        </div>
-        <div ref={setMarkerLayer} className="marker-layer" aria-label="Island map markers">
-          <MarkerButtons
-            selected={selected}
-            hover={hover}
-            onSelect={onSelect}
-            onHover={setHover}
-            onWorldMap={openWorld}
-          />
-        </div>
-        <div className="paper-wash" aria-hidden="true" />
-        <header className="masthead">
-          <button
-            className="brand"
-            onClick={openWorld}
-            aria-label="Grand Line Atlas, return to the world map"
-          >
-            <Icon name="compass" />
-            <span>
-              GRAND LINE<span className="brand-sub">AN INTERACTIVE ATLAS</span>
-            </span>
-          </button>
-          <nav aria-label="Main navigation">
-            <button className="nav-link" onClick={openWorld}>
-              <Icon name="map" />
-              The atlas
-            </button>
-            <button className="nav-link" onClick={() => setDialog('notes')}>
-              Field notes
-            </button>
-            <span className="nav-rule" />
-            <button
-              className="icon-button"
-              onClick={() => setDialog('settings')}
-              aria-label="Experience settings"
-            >
-              <Icon name="settings" />
-            </button>
-          </nav>
-        </header>
-        <main className="overlay">
-          {selected === null ? (
-            <>
-              <section className="intro" aria-labelledby="island-title">
-                <div className="chapter-kicker">
-                  <span className="small-rule" /> CHAPTER 01 <span className="dot">·</span> SANDY
-                  ISLAND
-                </div>
-                <h1 id="island-title" className="sr-only">
-                  Alabasta
-                </h1>
-                <div className="title-space" aria-hidden="true" />
-                <p className="intro-subtitle">A kingdom waiting for rain.</p>
-                <p className="intro-copy">
-                  Beyond the dunes, a promise still stands.
-                  <br />
-                  Follow the needle into the land of sand,
-                  <br />
-                  and the stories that changed its course.
-                </p>
-                <button className="journey-button" onClick={go}>
-                  Enter the kingdom{' '}
-                  <span>
-                    <Icon name="arrow" />
-                  </span>
-                </button>
-                <div className="island-meta">
-                  <span>GRAND LINE</span>
-                  <i />
-                  <span>ALABASTA ARC</span>
-                </div>
-              </section>
-              <div className="travel-caption">
-                <span className="eyebrow">THE DESERT KINGDOM</span>
-                <p>Every place holds a story.</p>
-                <span className="mono">Choose a landmark to look closer.</span>
-              </div>
-            </>
-          ) : (
-            <section className="story" aria-labelledby="story-title" data-lenis-prevent>
-              <button className="back-button" onClick={closeDetail}>
-                <Icon name="arrow" />
-                Return to the journey <kbd>ESC</kbd>
-              </button>
-              <span className="eyebrow">
-                0{selected + 1} <span className="dot">/</span> {places[selected].location}
-              </span>
-              <h2 id="story-title" tabIndex={-1} ref={detailHeading}>
-                {places[selected].name}
-              </h2>
-              <span className="story-rule" />
-              <p className="story-title">{island.incidents[selected].title}</p>
-              <p className="story-copy">{island.incidents[selected].description}</p>
-              <a
-                className="episode-link"
-                href={places[selected].source}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {selected === 7 ? '' : 'EPISODE '}
-                {island.incidents[selected].episodes}
-                <span>Official episode notes ↗</span>
-              </a>
-              <div className="story-actions">
-                {selected === 0 && (
-                  <button
-                    className={`rain-story ${rain ? 'active' : ''}`}
-                    onClick={() => setRain((v) => !v)}
-                  >
-                    <Icon name={rain ? 'sun' : 'rain'} />
-                    {rain ? 'Return to the desert sun' : 'Let the rain return'}
-                  </button>
-                )}
-                <button
-                  className="next-story"
-                  onClick={() => onSelect((selected + 1) % places.length)}
-                >
-                  Next landmark <Icon name="arrow" />
-                </button>
-              </div>
-            </section>
-          )}
-          <aside className="scene-aside">
-            <div className="location-stamp">
-              <span className="stamp-dot" />
-              <span>ALABASTA KINGDOM</span>
-            </div>
-            <div className="north">
-              <span>N</span>
-              <Icon name="compass" />
-              <span className="north-rule" />
-            </div>
-          </aside>
-          <div className="scene-controls">
-            <button
-              className={rain ? 'weather active' : 'weather'}
-              onClick={() => setRain((v) => !v)}
-              aria-pressed={rain}
-            >
-              <Icon name={rain ? 'rain' : 'sun'} />
-              <span>{rain ? 'The rain returns' : 'Desert sun'}</span>
-            </button>
-            <button className="merry-departure" onClick={openWorld}>
-              <Icon name="map" />
-              <span>
-                Set sail on the Going Merry<small>OPEN THE WORLD MAP</small>
-              </span>
-              <Icon name="arrow" />
-            </button>
-            <span className="scroll-hint">
-              <span className="mouse" />
-              SCROLL TO TRAVEL
-            </span>
-          </div>
-        </main>
-        <footer ref={dock} className="island-dock" id="landmarks" tabIndex={-1}>
-          <div className="dock-heading">
-            <span className="eyebrow">EXPLORE ALABASTA</span>
-            <span>Eight landmarks. Follow the coast, then head inland.</span>
-          </div>
-          <nav className="landmark-list" aria-label="Island landmarks" data-lenis-prevent>
-            {places.map((place, i) => (
-              <button
-                key={place.name}
-                className={`landmark ${selected === i ? 'active' : ''}`}
-                onClick={() => onSelect(i)}
-                onPointerEnter={() => setHover(i)}
-                onPointerLeave={() => setHover(null)}
-                onFocus={() => setHover(i)}
-                onBlur={() => setHover(null)}
-                aria-pressed={selected === i}
-              >
-                <span className="landmark-index">0{i + 1}</span>
-                <span className="landmark-name">
-                  {place.name}
-                  <span>{place.location}</span>
-                </span>
-                <span className="landmark-arrow">↗</span>
-              </button>
-            ))}
-          </nav>
-          <div className="dock-bottom">
-            <span>A FAN-MADE JOURNEY THROUGH THE WORLD OF ONE PIECE</span>
-            <span>SCROLL · DISCOVER · REMEMBER</span>
-            <button onClick={() => setDialog('notes')}>CREDITS & REFERENCES ↗</button>
-          </div>
-          <div className="journey-line" aria-hidden="true">
-            <span />
-          </div>
-        </footer>
-        <div className="scroll-track" aria-hidden="true" />
-      </div>
-      <Loading ready={ready} destination={destination} mapReady={mapReady} />
-      {worldOpen && <WorldMap onClose={closeWorld} onReady={onMapReady} interactive={ready} />}
-      <dialog
-        ref={modal}
-        className="atlas-dialog"
-        onCancel={() => setDialog(null)}
-        onClick={(e) => {
-          if (e.target === e.currentTarget) setDialog(null)
-        }}
+    <IslandContext.Provider value={config}>
+      <div
+        ref={root}
+        className={`app ${isWater ? 'is-water7' : ''} ${departed ? 'has-departed' : ''} ${selected !== null ? 'is-exploring' : ''} ${reduced ? 'reduced-motion' : ''}`}
       >
-        <div className="dialog-inner">
-          <button
-            className="dialog-close icon-button"
-            onClick={() => setDialog(null)}
-            aria-label="Close dialog"
-          >
-            <Icon name="close" />
-          </button>
-          {dialog === 'settings' && (
-            <>
-              <span className="eyebrow">MAKE YOURSELF AT HOME</span>
-              <h2>A comfortable voyage.</h2>
-              <label className="setting">
-                <span>
-                  Reduced motion<small>Still water, quiet wind, instant camera moves.</small>
+        <div inert={worldOpen || !ready} aria-hidden={worldOpen || undefined}>
+          <a className="skip-link" href="#landmarks">
+            Skip to island landmarks
+          </a>
+          <div className="scene" aria-label={`Interactive 3D diorama of ${island.name}`}>
+            {islandMounted && (
+              <SceneBoundary onError={onReady} sceneId={activeIsland}>
+                <Canvas
+                  frameloop={worldOpen ? 'never' : 'always'}
+                  dpr={quality ? [1, 1.25] : 1}
+                  gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
+                >
+                  <Suspense fallback={null}>
+                    <IslandContext.Provider value={config}>
+                      <Scene
+                        key={activeIsland}
+                        selected={selected}
+                        hover={hover}
+                        reduced={reduced}
+                        rain={rain}
+                        quality={quality}
+                        onSelect={onSelect}
+                        onHover={setHover}
+                        onReady={onReady}
+                        markerLayer={markerLayer}
+                        onWorldMap={openWorld}
+                      />
+                    </IslandContext.Provider>
+                  </Suspense>
+                </Canvas>
+              </SceneBoundary>
+            )}
+          </div>
+          <div ref={setMarkerLayer} className="marker-layer" aria-label="Island map markers">
+            <MarkerButtons
+              key={activeIsland}
+              selected={selected}
+              hover={hover}
+              onSelect={onSelect}
+              onHover={setHover}
+              onWorldMap={openWorld}
+            />
+          </div>
+          <div className="paper-wash" aria-hidden="true" />
+          <header className="masthead">
+            <button
+              className="brand"
+              onClick={openWorld}
+              aria-label="Grand Line Atlas, return to the world map"
+            >
+              <Icon name="compass" />
+              <span>
+                GRAND LINE<span className="brand-sub">AN INTERACTIVE ATLAS</span>
+              </span>
+            </button>
+            <nav aria-label="Main navigation">
+              <button className="nav-link" onClick={openWorld}>
+                <Icon name="map" />
+                The atlas
+              </button>
+              <button className="nav-link" onClick={() => setDialog('notes')}>
+                Field notes
+              </button>
+              <span className="nav-rule" />
+              <button
+                className="icon-button"
+                onClick={() => setDialog('settings')}
+                aria-label="Experience settings"
+              >
+                <Icon name="settings" />
+              </button>
+            </nav>
+          </header>
+          <main className="overlay">
+            {selected === null ? (
+              <>
+                <section className="intro" aria-labelledby="island-title">
+                  <div className="chapter-kicker">
+                    <span className="small-rule" /> CHAPTER {config.chapter}{' '}
+                    <span className="dot">·</span> {config.region}
+                  </div>
+                  <h1 id="island-title" className="sr-only">
+                    {island.name}
+                  </h1>
+                  <div className="title-space" aria-hidden="true" />
+                  <p className="intro-subtitle">{config.subtitle}</p>
+                  <p className="intro-copy">{config.description}</p>
+                  <button className="journey-button" onClick={go}>
+                    {config.action}{' '}
+                    <span>
+                      <Icon name="arrow" />
+                    </span>
+                  </button>
+                  <div className="island-meta">
+                    <span>GRAND LINE</span>
+                    <i />
+                    <span>{config.title} ARC</span>
+                  </div>
+                </section>
+                <div className="travel-caption">
+                  <span className="eyebrow">{isWater ? config.region : 'THE DESERT KINGDOM'}</span>
+                  <p>Every place holds a story.</p>
+                  <span className="mono">Choose a landmark to look closer.</span>
+                </div>
+              </>
+            ) : (
+              <section className="story" aria-labelledby="story-title" data-lenis-prevent>
+                <button className="back-button" onClick={closeDetail}>
+                  <Icon name="arrow" />
+                  Return to the journey <kbd>ESC</kbd>
+                </button>
+                <span className="eyebrow">
+                  {String(selected + 1).padStart(2, '0')} <span className="dot">/</span>{' '}
+                  {places[selected].location}
                 </span>
-                <input
-                  type="checkbox"
-                  checked={reduced}
-                  onChange={(e) => setReduced(e.target.checked)}
-                />
-              </label>
-              <label className="setting">
-                <span>
-                  High visual quality
-                  <small>Extra reflections and bloom. Balanced rendering is the default.</small>
-                </span>
-                <input
-                  type="checkbox"
-                  checked={quality}
-                  onChange={(e) => setQuality(e.target.checked)}
-                />
-              </label>
-              <p className="settings-note">
-                Scroll to travel. Select a landmark to pause and explore. Press Escape to return.
-              </p>
-            </>
-          )}
-          {dialog === 'notes' && (
-            <>
-              <span className="eyebrow">FROM THE CHART ROOM</span>
-              <h2>Made for the journey.</h2>
-              <p>
-                An independent fan-made world atlas inspired by Eiichiro Oda’s One Piece. The chart
-                now spans all four seas and the New World through Elbaph. The Alabasta diorama
-                revisits the original desert-kingdom adventure.
-              </p>
-              <p>
-                The architecture is an original 3D interpretation based on anime references. The
-                palace, clock tower, Rainbase and coastline share a compressed diorama; their
-                distances are illustrative.
-              </p>
-              <p>
-                Story summaries link to official episode notes and location references. One Piece
-                and its characters belong to their respective rights holders.
-              </p>
-              <p>
-                The atlas includes manga spoilers through Elbaph, with a content review dated 17
-                October 2026. Illustrated positions are not official geographic coordinates;
-                uncharted places stay in the directory. This is a curated atlas, not a live chapter
-                feed.
-              </p>
-              <div className="credits">
+                <h2 id="story-title" tabIndex={-1} ref={detailHeading}>
+                  {places[selected].name}
+                </h2>
+                <span className="story-rule" />
+                <p className="story-title">{island.incidents[selected].title}</p>
+                <p className="story-copy">{island.incidents[selected].description}</p>
                 <a
-                  href="https://one-piece.com/anime/126/index.html"
+                  className="episode-link"
+                  href={places[selected].source}
                   target="_blank"
                   rel="noreferrer"
                 >
-                  Official story reference ↗
+                  {isWater || selected === 7 ? '' : 'EPISODE '}
+                  {island.incidents[selected].episodes}
+                  <span>{isWater ? 'Official story reference' : 'Official episode notes'} ↗</span>
                 </a>
-                <a href="https://polyhaven.com/a/potsdamer_platz" target="_blank" rel="noreferrer">
-                  Environment light · Poly Haven (CC0) ↗
-                </a>
-                <span>Type · Cinzel, DM Sans & IBM Plex Mono (OFL)</span>
+                <div className="story-actions">
+                  {(isWater ? selected === 4 : selected === 0) && (
+                    <button
+                      className={`rain-story ${rain ? 'active' : ''}`}
+                      onClick={() => setRain((v) => !v)}
+                    >
+                      <Icon name={rain ? 'sun' : 'rain'} />
+                      {isWater
+                        ? rain
+                          ? 'Calm the sea'
+                          : 'Aqua Laguna'
+                        : rain
+                          ? 'Return to the desert sun'
+                          : 'Let the rain return'}
+                    </button>
+                  )}
+                  <button
+                    className="next-story"
+                    onClick={() => onSelect((selected + 1) % places.length)}
+                  >
+                    Next landmark <Icon name="arrow" />
+                  </button>
+                </div>
+              </section>
+            )}
+            <aside className="scene-aside">
+              <div className="location-stamp">
+                <span className="stamp-dot" />
+                <span>{config.region}</span>
               </div>
-            </>
-          )}
+              <div className="north">
+                <span>N</span>
+                <Icon name="compass" />
+                <span className="north-rule" />
+              </div>
+            </aside>
+            <div className="scene-controls">
+              <button
+                className={rain ? 'weather active' : 'weather'}
+                onClick={() => setRain((v) => !v)}
+                aria-pressed={rain}
+              >
+                <Icon name={rain ? 'rain' : 'sun'} />
+                <span>{config.weather[rain ? 1 : 0]}</span>
+              </button>
+              <button className="merry-departure" onClick={openWorld}>
+                <Icon name="map" />
+                <span>
+                  {isWater ? 'Return to the world chart' : 'Set sail on the Going Merry'}
+                  <small>OPEN THE WORLD MAP</small>
+                </span>
+                <Icon name="arrow" />
+              </button>
+              <span className="scroll-hint">
+                <span className="mouse" />
+                SCROLL TO TRAVEL
+              </span>
+            </div>
+          </main>
+          <footer ref={dock} className="island-dock" id="landmarks" tabIndex={-1}>
+            <div className="dock-heading">
+              <span className="eyebrow">EXPLORE {config.title}</span>
+              <span>{config.landmarkHint}</span>
+            </div>
+            <nav className="landmark-list" aria-label="Island landmarks" data-lenis-prevent>
+              {places.map((place, i) => (
+                <button
+                  key={place.name}
+                  className={`landmark ${selected === i ? 'active' : ''}`}
+                  onClick={() => onSelect(i)}
+                  onPointerEnter={() => setHover(i)}
+                  onPointerLeave={() => setHover(null)}
+                  onFocus={() => setHover(i)}
+                  onBlur={() => setHover(null)}
+                  aria-pressed={selected === i}
+                >
+                  <span className="landmark-index">{String(i + 1).padStart(2, '0')}</span>
+                  <span className="landmark-name">
+                    {place.name}
+                    <span>{place.location}</span>
+                  </span>
+                  <span className="landmark-arrow">↗</span>
+                </button>
+              ))}
+            </nav>
+            <div className="dock-bottom">
+              <span>A FAN-MADE JOURNEY THROUGH THE WORLD OF ONE PIECE</span>
+              <span>SCROLL · DISCOVER · REMEMBER</span>
+              <button onClick={() => setDialog('notes')}>CREDITS & REFERENCES ↗</button>
+            </div>
+            <div className="journey-line" aria-hidden="true">
+              <span />
+            </div>
+          </footer>
+          <div className="scroll-track" aria-hidden="true" />
         </div>
-      </dialog>
-    </div>
+        <Loading ready={ready} destination={destination} mapReady={mapReady} />
+        {worldOpen && (
+          <WorldMap
+            onEnterIsland={enterIsland}
+            onClose={closeWorld}
+            onReady={onMapReady}
+            interactive={ready}
+          />
+        )}
+        <dialog
+          ref={modal}
+          className="atlas-dialog"
+          onCancel={() => setDialog(null)}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setDialog(null)
+          }}
+        >
+          <div className="dialog-inner">
+            <button
+              className="dialog-close icon-button"
+              onClick={() => setDialog(null)}
+              aria-label="Close dialog"
+            >
+              <Icon name="close" />
+            </button>
+            {dialog === 'settings' && (
+              <>
+                <span className="eyebrow">MAKE YOURSELF AT HOME</span>
+                <h2>A comfortable voyage.</h2>
+                <label className="setting">
+                  <span>
+                    Reduced motion<small>Still water, quiet wind, instant camera moves.</small>
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={reduced}
+                    onChange={(e) => setReduced(e.target.checked)}
+                  />
+                </label>
+                <label className="setting">
+                  <span>
+                    High visual quality
+                    <small>Extra reflections and bloom. Balanced rendering is the default.</small>
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={quality}
+                    onChange={(e) => setQuality(e.target.checked)}
+                  />
+                </label>
+                <p className="settings-note">
+                  Scroll to travel. Select a landmark to pause and explore. Press Escape to return.
+                </p>
+              </>
+            )}
+            {dialog === 'notes' && (
+              <>
+                <span className="eyebrow">FROM THE CHART ROOM</span>
+                <h2>Made for the journey.</h2>
+                <p>
+                  An independent fan-made world atlas inspired by Eiichiro Oda’s One Piece. The
+                  chart spans all four seas and the New World through Elbaph. Alabasta and Water 7
+                  revisit the desert-kingdom and canal-city adventures in interactive 3D.
+                </p>
+                <p>
+                  The architecture is an original 3D interpretation based on anime references. The
+                  desert settlements and Water 7’s terraces, shipyards and rail outposts form
+                  compressed dioramas. Distances and placements are illustrative; Water 7 uses a
+                  historical arrival setting, with later events described in its stories.
+                </p>
+                <p>
+                  Story summaries link to official episode notes and location references. One Piece
+                  and its characters belong to their respective rights holders.
+                </p>
+                <p>
+                  The atlas includes manga spoilers through Elbaph, with a content review dated 17
+                  October 2026. Illustrated positions are not official geographic coordinates;
+                  uncharted places stay in the directory. This is a curated atlas, not a live
+                  chapter feed.
+                </p>
+                <div className="credits">
+                  <a
+                    href={
+                      isWater
+                        ? 'https://one-piece.com/story/water_seven/index.html'
+                        : 'https://one-piece.com/anime/126/index.html'
+                    }
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Official story reference ↗
+                  </a>
+                  <a
+                    href="https://polyhaven.com/a/potsdamer_platz"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Environment light · Poly Haven (CC0) ↗
+                  </a>
+                  <span>Type · Cinzel, DM Sans & IBM Plex Mono (OFL)</span>
+                </div>
+              </>
+            )}
+          </div>
+        </dialog>
+      </div>
+    </IslandContext.Provider>
   )
 }

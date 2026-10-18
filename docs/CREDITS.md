@@ -2,7 +2,17 @@
 
 ## Original application assets
 
-Alabasta geometry, interface icons, ocean shaders, scene layout and interactions were authored for this project. Architecture uses the references below. The layout is interpretive and distances are compressed. No third-party One Piece model or promotional still is shipped as site artwork.
+Alabasta and Water 7 geometry, interface icons, ocean shaders, scene layouts and interactions were authored for this project. Architecture uses the references below. Layouts are interpretive and distances are compressed. No third-party One Piece model or promotional still is shipped as site artwork.
+
+## Water 7
+
+- [Official Water Seven summary](https://one-piece.com/story/water_seven/index.html): crew arrival, ship repairs, Franky Family, Iceburg and the pursuit of Robin.
+- [Official Enies Lobby summary](https://one-piece.com/story/enies_lobby/index.html): later local events and departure aboard the Sunny, described in the Scrap Island story.
+- [Water 7 overview](https://onepiece.fandom.com/wiki/Water_7) and [location index](https://onepiece.fandom.com/wiki/Category:Water_7_Locations): secondary naming and layout references.
+
+The fourteen-stop city is an original compressed interpretation of the historical arrival setting. Exact bearings, dock ordering and secondary building proportions are illustrative. The Merry appears at the arrival waterfront; the Sunny is described as a later event. The Sea Train, Bull boat and station buildings are simplified original models. Enies Lobby is not included in this island. The static city uses a shared Cycles diffuse lighting atlas and 54 spatial batches; see [implementation notes](WATER-7-IMPLEMENTATION.md).
+
+Modeled lettering uses Helvetiker by MAGENTA Ltd. (2004), bundled with Three.js under the [MgOpen font license](licenses/helvetiker.txt). No outside textures or extracted game geometry were used for Water 7.
 
 ## One Piece references
 
@@ -24,7 +34,7 @@ The narrative descriptions are original short summaries, not copied episode text
 - [Sandora River](https://onepiece.fandom.com/wiki/Sandora_River), [Erumalu](https://onepiece.fandom.com/wiki/Erumalu), [Katorea](https://onepiece.fandom.com/wiki/Katorea): secondary references for the inland route, ruined oasis and rebel relocation.
 - [Red Line](https://onepiece.fandom.com/wiki/Red_Line), [Grand Line](https://onepiece.fandom.com/wiki/Grand_Line), [Calm Belt](https://onepiece.fandom.com/wiki/Calm_Belt): secondary world-geography references. Each selectable chart location also links to its individual reference.
 
-The world-chart illustration is the user-supplied [OnePiece15 Map.png](../OnePiece15%20Map.png), used at the user's request. The app ships an overview and lossless full-resolution tiles derived from that image, preserving its artwork and embedded attribution. The illustration's authorship is not claimed by this project. Interactive pins are traced to its locations; the optional route overlay and navigation controls are authored for this app. Alabasta is the only implemented 3D island; the remaining locations have informational entries. Uncharted destinations are listed without pins.
+The world-chart illustration is the user-supplied [OnePiece15 Map.png](../OnePiece15%20Map.png), used at the user's request. The app ships an overview and lossless full-resolution tiles derived from that image, preserving its artwork and embedded attribution. The illustration's authorship is not claimed by this project. Interactive pins are traced to its locations; the optional route overlay and navigation controls are authored for this app. Alabasta and Water 7 have implemented 3D islands; the remaining locations have informational entries. Uncharted destinations are listed without pins.
 
 ## Environment
 
@@ -54,3 +64,14 @@ Story descriptions include manga spoilers. New World coverage reaches Elbaph, us
 - [Location directory](https://onepiece.fandom.com/wiki/List_of_Locations): naming, aliases, and unknown-position distinctions, cross-checked against the user-supplied illustration.
 
 The voyage loader is original SVG/CSS artwork. Clouds drift at different speeds, the ship travels and bobs, and layered waves move beneath it. Reduced-motion mode keeps a static scene and short transitions; animations pause while the overlay is hidden.
+
+### Water 7 visual revision references
+
+Viewed reference stills (research copies remain excluded from the public site):
+
+- [Franky House exterior](https://vignette3.wikia.nocookie.net/onepiece/images/4/42/Franky_House_Infobox.png/revision/latest?cb=20130718145910&path-prefix=pl): green frontage, purple framing, swept blue roof, gold crescent, articulated claw arms, windmill and water tank.
+- [Galley-La headquarters](https://3.bp.blogspot.com/-pI3mBcWyDos/UaGSNBt1psI/AAAAAAAARV4/MEk9RtGjGhM/s1600/Quartel-General%2Bda%2BGalley-La.png): pale towers, crenellations, round windows and the arched front loggia.
+- [Water 7 city view](https://pbs.twimg.com/media/HAq-YyKbAAEGTx1.jpg): broad built-up slopes, numbered water gates, cascading channels and the tiered fountain silhouette.
+- [Puffing Tom exterior](https://static.wikia.nocookie.net/onepiece/images/3/3f/Puffing_Tom_Infobox.png/revision/latest/scale-to-width-down/1200?cb=20220701185753): green boiler, red/brown cab, brass details and passenger train proportions.
+
+These stills are visual reference material, not verified dimensioned plans. Detailed building placement remains illustrative.

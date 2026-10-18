@@ -119,9 +119,9 @@ test('desktop journey: focus, return, weather, atlas and reduced motion', async 
   await expect(chart.locator('.chart-place')).toHaveCount(
     chartPlaces.filter((p) => p.position !== 'unknown').length,
   )
-  await page.getByRole('textbox', { name: 'Find a place' }).fill('Water 7')
+  await page.getByRole('textbox', { name: 'Find a place' }).fill('Dressrosa')
   await page.locator('.chart-results button').click()
-  await expect(chart.getByRole('heading', { name: 'Water 7', exact: true })).toBeVisible()
+  await expect(chart.getByRole('heading', { name: 'Dressrosa', exact: true })).toBeVisible()
   await expect(page.locator('.chart-status')).toHaveText('Chart entry · 3D island to come')
   const previousZoom = await page.locator('.chart-tools output').textContent()
   await page.getByRole('button', { name: 'Zoom in', exact: true }).click()
@@ -142,7 +142,7 @@ test('desktop journey: focus, return, weather, atlas and reduced motion', async 
     .getByRole('button', { name: 'Grand Line Atlas, return to the world map', exact: true })
     .click()
   await expect(chart).toBeVisible()
-  await expect(chart.locator('.chart-header button')).toHaveCount(0)
+  await expect(chart.locator('.chart-header button:visible')).toHaveCount(0)
   expect(errors).toEqual([])
 })
 

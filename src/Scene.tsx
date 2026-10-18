@@ -20,7 +20,10 @@ import { SimplexNoise } from 'three/addons/math/SimplexNoise.js'
 import * as T from 'three'
 import gsap from 'gsap'
 import { Ocean } from './Ocean'
-import { island, places, travel } from './world'
+import { travel } from './world'
+import { useIsland } from './IslandContext'
+import Water7 from './Water7Scene'
+import water7Layout from './water7-layout.json' with { type: 'json' }
 import titleFont from '@fontsource/cinzel/files/cinzel-latin-500-normal.woff?url'
 
 type Props = {
@@ -37,6 +40,7 @@ type Props = {
 }
 
 function CameraRig({ selected, reduced }: Pick<Props, 'selected' | 'reduced'>) {
+  const { places, island } = useIsland()
   const size = useThree((state) => state.size)
   const rig = useRef<T.Group>(null!)
   const camera = useRef<T.PerspectiveCamera>(null!)
@@ -45,23 +49,48 @@ function CameraRig({ selected, reduced }: Pick<Props, 'selected' | 'reduced'>) {
   const journey = useMemo(
     () =>
       new T.CatmullRomCurve3(
-        [
-          new T.Vector3(76, 57, 94),
-          new T.Vector3(54, 35, 53),
-          new T.Vector3(14, 27, 46),
-          new T.Vector3(-35, 29, 36),
-          new T.Vector3(-58, 29, 2),
-          new T.Vector3(18, 36, 72),
-        ],
+        island.id === 'water-7'
+          ? [
+              [215, 155, 285],
+              [155, 105, 185],
+              [0, 115, 215],
+              [-195, 110, 138],
+              [-215, 125, -92],
+              [190, 115, 205],
+            ].map((p) => new T.Vector3(...p))
+          : [
+              new T.Vector3(76, 57, 94),
+              new T.Vector3(54, 35, 53),
+              new T.Vector3(14, 27, 46),
+              new T.Vector3(-35, 29, 36),
+              new T.Vector3(-58, 29, 2),
+              new T.Vector3(18, 36, 72),
+            ],
         false,
         'catmullrom',
         0.45,
       ),
-    [],
+    [island.id],
   )
   const focus = useMemo(() => new T.Vector3(), [])
   const point = useMemo(() => new T.Vector3(), [])
   const tangent = useMemo(() => new T.Vector3(), [])
+  const introShift = useRef(0)
+  useEffect(() => {
+    if (island.id !== 'water-7' || size.width > 760 || selected !== null) return
+    const intro = document.querySelector('.intro')
+    const controls = document.querySelector('.scene-controls')
+    if (!intro || !controls) return
+    const measure = () => {
+      const top = intro.getBoundingClientRect().bottom + 20
+      const bottom = controls.getBoundingClientRect().top - 12
+      introShift.current = Math.min(0, (size.height - top - bottom) / size.height)
+    }
+    const observer = new ResizeObserver(measure)
+    observer.observe(intro)
+    measure()
+    return () => observer.disconnect()
+  }, [island.id, selected, size.width, size.height])
   useEffect(() => {
     animation.current?.kill()
     if (selected !== null) {
@@ -101,7 +130,7 @@ function CameraRig({ selected, reduced }: Pick<Props, 'selected' | 'reduced'>) {
         y: dest.y,
         z: dest.z,
         lx: -11 * (1 - travel.progress),
-        ly: 4,
+        ly: island.id === 'water-7' ? 17 : 4,
         lz: -1,
         shift: 0,
         shiftY: 0,
@@ -123,7 +152,7 @@ function CameraRig({ selected, reduced }: Pick<Props, 'selected' | 'reduced'>) {
       p.y = T.MathUtils.lerp(p.y, point.y, damp)
       p.z = T.MathUtils.lerp(p.z, point.z, damp)
       p.lx = T.MathUtils.lerp(p.lx, -11 * (1 - travel.progress) + tangent.x * 0.6, damp)
-      p.ly = T.MathUtils.lerp(p.ly, 4, damp)
+      p.ly = T.MathUtils.lerp(p.ly, island.id === 'water-7' ? 17 : 4, damp)
       p.lz = T.MathUtils.lerp(p.lz, -1 + tangent.z * 0.6, damp)
     }
     const p = pose.current
@@ -133,7 +162,12 @@ function CameraRig({ selected, reduced }: Pick<Props, 'selected' | 'reduced'>) {
       const horizontalAngle = Math.atan(
         (Math.tan(T.MathUtils.degToRad(37 / 2)) * size.width) / size.height,
       )
-      const scale = Math.max(1, 44 / Math.sin(horizontalAngle) / distance)
+      const scale = Math.max(
+        1,
+        (island.id === 'water-7' ? water7Layout.overviewRadius : 44) /
+          Math.sin(horizontalAngle) /
+          distance,
+      )
       rig.current.position.set(
         (p.x - p.lx) * scale,
         p.ly + (p.y - p.ly) * scale,
@@ -148,7 +182,11 @@ function CameraRig({ selected, reduced }: Pick<Props, 'selected' | 'reduced'>) {
       size.width,
       size.height,
       (-p.shift * size.width) / 2,
-      (p.shiftY * size.height) / 2,
+      ((selected === null && size.width <= 760 && island.id === 'water-7'
+        ? introShift.current * (1 - T.MathUtils.smoothstep(travel.progress, 0, 0.16))
+        : p.shiftY) *
+        size.height) /
+        2,
       size.width,
       size.height,
     )
@@ -156,12 +194,19 @@ function CameraRig({ selected, reduced }: Pick<Props, 'selected' | 'reduced'>) {
   }, -3)
   return (
     <group ref={rig} position={[76, 57, 94]}>
-      <PerspectiveCamera ref={camera} makeDefault fov={37} near={0.2} far={420} />
+      <PerspectiveCamera
+        ref={camera}
+        makeDefault
+        fov={37}
+        near={0.2}
+        far={island.id === 'water-7' ? 1800 : 420}
+      />
     </group>
   )
 }
 
 function Island({ onReady }: Pick<Props, 'onReady'>) {
+  const { island } = useIsland()
   const { scene } = useGLTF(island.meshUrl)
   const gl = useThree((s) => s.gl)
   useEffect(() => {
@@ -190,6 +235,7 @@ function Island({ onReady }: Pick<Props, 'onReady'>) {
 }
 
 function ArcTitle({ reduced }: { reduced: boolean }) {
+  const { title } = useIsland()
   const { camera, viewport, size } = useThree()
   const group = useRef<T.Group>(null!)
   const titleRect = useRef({ left: 80, top: 220, height: 110 })
@@ -252,10 +298,11 @@ function ArcTitle({ reduced }: { reduced: boolean }) {
     const h = 2 * Math.tan(T.MathUtils.degToRad((camera as T.PerspectiveCamera).fov / 2)) * distance
     const w = h * viewport.aspect
     const r = titleRect.current
+    const view = (camera as T.PerspectiveCamera).view
     group.current.position
       .set(
-        (r.left / size.width - 0.5) * w,
-        (0.5 - (r.top + r.height * 0.5) / size.height) * h,
+        ((r.left + (view?.offsetX ?? 0)) / size.width - 0.5) * w,
+        (0.5 - (r.top + r.height * 0.5 + (view?.offsetY ?? 0)) / size.height) * h,
         -distance,
       )
       .applyMatrix4(camera.matrixWorld)
@@ -274,7 +321,7 @@ function ArcTitle({ reduced }: { reduced: boolean }) {
         material={material}
         renderOrder={10}
       >
-        ALABASTA
+        {title}
       </Text>
     </group>
   )
@@ -283,6 +330,7 @@ function ArcTitle({ reduced }: { reduced: boolean }) {
 // One DOM layer projects all anchors after the camera updates. No per-marker
 // scene raycasts, occlusion toggles, or React renders during camera movement.
 function Markers({ markerLayer }: Pick<Props, 'markerLayer'>) {
+  const { island } = useIsland()
   const buttons = useMemo(
     () =>
       markerLayer ? Array.from(markerLayer.querySelectorAll<HTMLButtonElement>('.map-marker')) : [],
@@ -291,7 +339,7 @@ function Markers({ markerLayer }: Pick<Props, 'markerLayer'>) {
   const points = useMemo(
     () => [
       ...island.incidents.map(({ localPosition: p }) => new T.Vector3(p.x, p.y + 1.4, p.z)),
-      new T.Vector3(16, 1.6, 31),
+      island.id === 'water-7' ? new T.Vector3(-78, 2, 95) : new T.Vector3(16, 1.6, 31),
     ],
     [],
   )
@@ -320,6 +368,7 @@ export function MarkerButtons({
   onHover,
   onWorldMap,
 }: Pick<Props, 'selected' | 'hover' | 'onSelect' | 'onHover' | 'onWorldMap'>) {
+  const { places, island } = useIsland()
   return (
     <>
       {places.map((place, index) => (
@@ -333,18 +382,22 @@ export function MarkerButtons({
           onFocus={() => onHover(index)}
           onBlur={() => onHover(null)}
         >
-          <span className="marker-number">0{index + 1}</span>
+          <span className="marker-number">{String(index + 1).padStart(2, '0')}</span>
           <span className="marker-label">{place.name}</span>
         </button>
       ))}
       <button
         className="map-marker merry-marker"
         onClick={onWorldMap}
-        aria-label="Board the Going Merry and open the world map"
+        aria-label={
+          island.id === 'water-7'
+            ? 'Return to the world map'
+            : 'Board the Going Merry and open the world map'
+        }
       >
         <span className="marker-number">⚓</span>
         <span className="marker-label">
-          Going Merry <small>OPEN WORLD MAP ↗</small>
+          {island.id === 'water-7' ? 'World chart' : 'Going Merry'} <small>OPEN WORLD MAP ↗</small>
         </span>
       </button>
     </>
@@ -684,12 +737,14 @@ function Effects({
 }
 
 export default function Scene(props: Props) {
+  const { island } = useIsland()
+  const water = island.id === 'water-7'
   const { selected, hover, reduced, rain, onReady, quality } = props
   const sunlight = useRef<T.DirectionalLight>(null!)
   return (
     <Selection>
       <color attach="background" args={['#bcd8db']} />
-      <fog attach="fog" args={['#bcd8db', 145, 300]} />
+      <fog attach="fog" args={water ? ['#bcd8db', 650, 1400] : ['#bcd8db', 145, 300]} />
       <CameraRig selected={selected} reduced={reduced} />
       <ambientLight intensity={1.5} />
       <directionalLight ref={sunlight} position={[-30, 60, 20]} intensity={2} />
@@ -698,20 +753,37 @@ export default function Scene(props: Props) {
         environmentIntensity={0.5}
         environmentRotation={[0, 1, 0]}
       />
-      <Island onReady={onReady} />
-      <Ocean reduced={reduced} rain={rain} />
+      {water ? (
+        <Water7 onReady={onReady} reduced={reduced} rain={rain} />
+      ) : (
+        <Island onReady={onReady} />
+      )}
+      <Ocean reduced={reduced} rain={rain} wide={water} />
       {selected === null && <ArcTitle reduced={reduced} />}
       <Markers {...props} />
-      <PalaceFlags active={hover === 0 || selected === 0} reduced={reduced} />
-      <Falcon active={hover === 1 || selected === 1} reduced={reduced} />
-      <Sand active={hover === 2 || selected === 2} reduced={reduced} />
-      <Sand active={hover === 5 || selected === 5} reduced={reduced} position={[-22, 2, 12]} />
-      <Sand active={hover === 6 || selected === 6} reduced={reduced} position={[19, 2, 21]} />
-      <Ship
-        active={hover === 4 || selected === 4}
-        reduced={reduced}
-        onWorldMap={props.onWorldMap}
-      />
+      {!water && (
+        <>
+          <PalaceFlags active={hover === 0 || selected === 0} reduced={reduced} />
+          <Falcon active={hover === 1 || selected === 1} reduced={reduced} />
+          <Sand active={hover === 2 || selected === 2} reduced={reduced} />
+          <Sand active={hover === 5 || selected === 5} reduced={reduced} position={[-22, 2, 12]} />
+          <Sand active={hover === 6 || selected === 6} reduced={reduced} position={[19, 2, 21]} />
+          <Ship
+            active={hover === 4 || selected === 4}
+            reduced={reduced}
+            onWorldMap={props.onWorldMap}
+          />
+        </>
+      )}
+      {water && (
+        <group position={[-94, 0, 65]}>
+          <Ship
+            active={hover === 0 || selected === 0}
+            reduced={reduced}
+            onWorldMap={props.onWorldMap}
+          />
+        </group>
+      )}
       <Rain rain={rain} reduced={reduced} />
       <LogPose reduced={reduced} quality={quality} />
       {quality && <Effects reduced={reduced} quality={quality} light={sunlight} />}
