@@ -129,15 +129,20 @@ function CameraRig({ selected, reduced }: Pick<Props, 'selected' | 'reduced'>) {
     const p = pose.current
     rig.current.position.set(p.x, p.y, p.z)
     if (selected === null && size.width <= 760) {
-      const scale = Math.max(1, (size.height / size.width) * 0.95)
+      const distance = Math.hypot(p.x - p.lx, p.y - p.ly, p.z - p.lz)
+      const horizontalAngle = Math.atan(
+        (Math.tan(T.MathUtils.degToRad(37 / 2)) * size.width) / size.height,
+      )
+      const scale = Math.max(1, 44 / Math.sin(horizontalAngle) / distance)
       rig.current.position.set(
-        p.lx + (p.x - p.lx) * scale,
+        (p.x - p.lx) * scale,
         p.ly + (p.y - p.ly) * scale,
-        p.lz + (p.z - p.lz) * scale,
+        (p.z - p.lz) * scale,
       )
     }
     rig.current.updateMatrixWorld()
     focus.set(p.lx, p.ly, p.lz)
+    if (selected === null && size.width <= 760) focus.set(0, p.ly, 0)
     camera.current.lookAt(focus)
     camera.current.setViewOffset(
       size.width,

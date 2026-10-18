@@ -421,21 +421,23 @@ export default function App() {
                 {island.incidents[selected].episodes}
                 <span>Official episode notes ↗</span>
               </a>
-              {selected === 0 && (
+              <div className="story-actions">
+                {selected === 0 && (
+                  <button
+                    className={`rain-story ${rain ? 'active' : ''}`}
+                    onClick={() => setRain((v) => !v)}
+                  >
+                    <Icon name={rain ? 'sun' : 'rain'} />
+                    {rain ? 'Return to the desert sun' : 'Let the rain return'}
+                  </button>
+                )}
                 <button
-                  className={`rain-story ${rain ? 'active' : ''}`}
-                  onClick={() => setRain((v) => !v)}
+                  className="next-story"
+                  onClick={() => onSelect((selected + 1) % places.length)}
                 >
-                  <Icon name={rain ? 'sun' : 'rain'} />
-                  {rain ? 'Return to the desert sun' : 'Let the rain return'}
+                  Next landmark <Icon name="arrow" />
                 </button>
-              )}
-              <button
-                className="next-story"
-                onClick={() => onSelect((selected + 1) % places.length)}
-              >
-                Next landmark <Icon name="arrow" />
-              </button>
+              </div>
             </section>
           )}
           <aside className="scene-aside">

@@ -38,8 +38,16 @@ test('phone map, pinch zoom, island stories and touch return', async ({ page, co
   await expect(page.locator('.loading')).toBeHidden({ timeout: 45000 })
   await expect(page.locator('.scene canvas')).toBeVisible()
   await page.screenshot({ path: 'artifacts/mobile-intro.png' })
+  await expect(page.locator('.marker-layer')).toBeHidden()
+  await page.getByRole('button', { name: 'Enter the kingdom' }).tap()
+  await expect(page.locator('.app')).toHaveClass(/has-departed/)
+  await page.waitForTimeout(1600)
+  const caption = (await page.locator('.travel-caption').boundingBox())!
+  const masthead = (await page.locator('.masthead').boundingBox())!
+  expect(caption.y).toBeGreaterThanOrEqual(masthead.y + masthead.height)
+  await page.screenshot({ path: 'artifacts/mobile-journey.png' })
   for (const width of [390, 360]) {
-    await page.setViewportSize({ width, height: 844 })
+    await page.setViewportSize({ width, height: width === 360 ? 640 : 740 })
     for (let i = 0; i < 8; i++) {
       await page.locator('.landmark').nth(i).tap()
       await page.waitForTimeout(1400)
@@ -49,10 +57,15 @@ test('phone map, pinch zoom, island stories and touch return', async ({ page, co
       expect(await page.locator('.story').evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(
         true,
       )
-      const marker = (await page.locator('.map-marker').nth(i).boundingBox())!
-      expect(marker.y + marker.height).toBeLessThan(card.y)
+      expect(
+        await page.locator('.story').evaluate((el) => el.scrollHeight <= el.clientHeight + 1),
+      ).toBe(true)
+      expect(card.y).toBeGreaterThan(100)
+      await expect(page.locator('.story .next-story')).toBeInViewport()
+      await expect(page.locator('.marker-layer')).toBeHidden()
+      if (i === 0) await page.screenshot({ path: `artifacts/mobile-palace-${width}.png` })
       if (i === 4) await page.screenshot({ path: `artifacts/mobile-story-${width}.png` })
-      await page.getByRole('button', { name: 'Return to the journey ESC' }).tap()
+      await page.getByRole('button', { name: /^Return to the journey/ }).tap()
       await expect(page.locator('.story')).toHaveCount(0)
     }
   }
@@ -71,9 +84,9 @@ test('phone map, pinch zoom, island stories and touch return', async ({ page, co
   await page.setViewportSize({ width: 844, height: 390 })
   await page.locator('.landmark').nth(4).tap()
   await page.screenshot({ path: 'artifacts/mobile-landscape.png' })
-  await expect(page.getByRole('button', { name: 'Return to the journey ESC' })).toBeVisible()
+  await expect(page.getByRole('button', { name: /^Return to the journey/ })).toBeVisible()
   expect(await page.locator('.story').evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true)
-  await page.getByRole('button', { name: 'Return to the journey ESC' }).tap()
+  await page.getByRole('button', { name: /^Return to the journey/ }).tap()
   await page.getByRole('button', { name: 'The atlas', exact: true }).tap()
   await expect(page.locator('.loading')).toBeHidden()
   await page.setViewportSize({ width: 390, height: 844 })

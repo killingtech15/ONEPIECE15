@@ -15,7 +15,7 @@ Open the URL printed by Vite. `npm run build` creates the static production site
 
 ## Explore
 
-- On phones, **Browse** opens map search, filters and location details. Drag to pan, pinch or use the zoom buttons, and tap a location. Island landmarks scroll horizontally; stories use a scrollable bottom card in portrait. Swipe downward from the top of a story to return to the journey, or use its return button.
+- On phones, **Browse** opens map search, filters and location details. Drag to pan, pinch or use the zoom buttons, and tap a location. Island landmarks scroll horizontally; complete story cards fit their content without inner scrolling. Swipe downward to return to the journey, or use the return button. Markers stay hidden during the introduction and while a story is open so they cannot cover the text.
 - The world map opens first. Click **Alabasta** on the chart or in search results to enter the existing island model. The animated sea, clouds and travelling-ship transition plays on initial load and between the map and island scenes. Landmark stories open and close without a loading transition.
 - Scroll or select **Enter the kingdom** to follow the curved camera route.
 - Hover over a map marker or its bottom navigation entry to animate that landmark.
