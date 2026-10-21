@@ -15,14 +15,14 @@ Implemented 18 October 2026 from the [planning brief](WATER-7-PLAN.md). This is 
 
 | Static asset | Measured value |
 |---|---:|
-| GLB bytes | 10,766,352 (10.27 MiB) |
-| Triangles | 133,924 |
+| GLB bytes | 10,657,712 (10.16 MiB) |
+| Triangles | 132,016 |
 | District meshes | 54 |
 | Shared lighting texture | 4096 × 4096 |
 
 Geometry is generated deterministically by [build-water7.mjs](../scripts/build-water7.mjs). [bake-water7.py](../scripts/bake-water7.py) bakes Cycles diffuse color, direct and indirect light into one atlas, then exports unlit materials while retaining district boundaries for frustum culling. Water 7 has no realtime building shadows. Mipmaps and up to 8× anisotropy preserve texture clarity at oblique views. Animated vehicles and water are additional geometry outside the static counts above.
 
-The single model loads on first island entry. Separate district downloads and LODs proposed in the plan are not implemented: the complete static asset is currently about 10.27 MiB. The render loop pauses on the world chart; the inactive island is unmounted and model assets remain cached for re-entry. Balanced rendering remains the default.
+The single model loads on first island entry. Separate district downloads and LODs proposed in the plan are not implemented: the complete static asset is currently about 10.16 MiB. The render loop pauses on the world chart; the inactive island is unmounted and model assets remain cached for re-entry. Balanced rendering remains the default.
 
 ```sh
 npm run model:water7
@@ -45,3 +45,7 @@ Secondary landmarks and rail outposts are compressed vignettes. The Rocketman wa
 The city footprint and outlying districts were expanded. Six staggered residential rows, radial water channels, larger dry docks, cranes, market awnings, the three-basin fountain, and more shoreline buildings replace the narrow concentric neighborhood rings. Franky House now includes the green/purple facade, swept blue roof, crescent, claw arms, windmill, tank and star signage. Galley-La has crenellated towers and an arched loggia; Blue Station has an arched facade, clock entrance and blue vault. These are original interpretations informed by the reference stills linked in the credits.
 
 The Sea Train has five independently positioned units: locomotive, tender and three coaches. Each samples a different arc-length distance on the shared rail curve; headings follow the rail beneath each carriage. Couplings connect neighboring units, wheels turn, and steam is pooled in ten instances. A geometry test checks spacing and coupling gaps across the bends. The complete train leaves the far end before its travel cycle restarts behind the terminal.
+
+### Boat and sign placement correction - 21 October 2026
+
+The Merry is moored beside the arrival pier, with its world-map marker aligned to the boat. The Bull boat now floats at sea level beyond the western end of the rental jetty, clear of the numbered gate and seawall. Its drift is limited to 0.35 units instead of crossing the shore. Both landmark camera bounds include the boats. The WATER 7 lettering is attached to a framed, bracketed plaque above the lower fountain rim, with clearance from the sloped city foundation and curved basin. An open forecourt keeps nearby rooftops clear of the sign.

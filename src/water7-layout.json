@@ -1,7 +1,7 @@
 {
   "landmarks": [
-    { "target": [-75, 4, 79], "radius": 14 },
-    { "target": [-41, 9, 61], "radius": 9 },
+    { "target": [-78, 4, 85], "radius": 20 },
+    { "target": [-46, 7, 62], "radius": 14 },
     { "target": [-18, 12, 58], "radius": 15 },
     { "target": [47, 21, 33], "radius": 17 },
     { "target": [0, 48, 0], "radius": 23 },

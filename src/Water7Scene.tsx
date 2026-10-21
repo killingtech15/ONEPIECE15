@@ -103,8 +103,15 @@ export default function Water7({
   }, [gl])
   useFrame(({ clock }, dt) => {
     const time = reduced ? 0 : clock.elapsedTime
-    boat.current.position.y = 6.8 + Math.sin(time * 1.4) * 0.12
-    boat.current.position.x = -41 + Math.sin(time * 0.16) * 3
+    // The rental jetty projects over sea-level water, outside the raised city canals.
+    // Moor beyond its western end, clear of the seawall and numbered gate.
+    const drift = Math.sin(time * 0.7) * 0.35
+    boat.current.position.set(
+      -52 + drift * 0.74,
+      0.7 + Math.sin(time * 1.4) * 0.08,
+      65 + drift * 0.67,
+    )
+    boat.current.rotation.y = -0.9 + Math.sin(time * 0.6) * 0.015
     water.current.children.forEach((o, i) => {
       o.scale.x = 1 + Math.sin(time * 2 + i) * 0.06
     })
@@ -151,7 +158,7 @@ export default function Water7({
         </mesh>
       </group>
       <Water7Train reduced={reduced} />
-      <group ref={boat} position={[-41, 6.8, 68]}>
+      <group ref={boat} position={[-52, 0.7, 65]} rotation={[0, -0.9, 0]}>
         <mesh>
           <sphereGeometry args={[1, 12, 8]} />
           <meshStandardMaterial color="#bf7854" />

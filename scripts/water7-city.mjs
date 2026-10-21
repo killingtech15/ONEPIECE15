@@ -68,6 +68,8 @@ export function buildCity({ add, box, cyl, ring, sign, beam, house, bridge, rand
       if (Math.abs(Math.sin(a * 4)) < 0.19) continue
       const x = Math.cos(a) * r,
         z = Math.sin(a) * r
+      // Leave an open fountain forecourt so rooftops cannot intersect or hide its plaque.
+      if (r <= 26 && z > 12 && Math.abs(x) < 15) continue
       if (x > 15 && z < -13 && z > -44) continue
       if (x < -48 && z > 3 && z < 21) continue
       if (z > 49 && x > -35 && x < 3) continue
@@ -149,7 +151,15 @@ export function buildCity({ add, box, cyl, ring, sign, beam, house, bridge, rand
   cyl([0, 44, 0], 2.8, 5, 11, 'stone', 32)
   cyl([0, 55, 0], 1.4, 3, 10, 'stone', 24)
   add(new T.ConeGeometry(2, 9, 12), 'blue', [0, 69, 0])
-  sign('WATER 7', [0, 36, 16.2], 2.4)
+  // A flat, bracketed plaque keeps every letter supported and outside the curved basin.
+  box([0, 39.5, 18.3], [22, 4.5, 0.5], 'trim')
+  for (const x of [-11, 11]) box([x, 39.5, 18.6], [0.22, 4.7, 0.18], 'iron')
+  for (const y of [37.25, 41.75]) box([0, y, 18.6], [22.2, 0.22, 0.18], 'iron')
+  for (const x of [-8, 8]) {
+    beam([x, 36, 13], [x, 38.8, 18.3], 0.45, 'iron')
+    beam([x, 36.5, 13], [x, 36.5, 18.3], 0.4, 'iron')
+  }
+  sign('WATER 7', [0, 38.5, 18.61], 2.1)
   // Lower town follows the shoreline in separate blocks with alleys and quays.
   for (const [cx, cz] of [
     [-68, 40],

@@ -339,7 +339,7 @@ function Markers({ markerLayer }: Pick<Props, 'markerLayer'>) {
   const points = useMemo(
     () => [
       ...island.incidents.map(({ localPosition: p }) => new T.Vector3(p.x, p.y + 1.4, p.z)),
-      island.id === 'water-7' ? new T.Vector3(-78, 2, 95) : new T.Vector3(16, 1.6, 31),
+      island.id === 'water-7' ? new T.Vector3(-83, 2, 94) : new T.Vector3(16, 1.6, 31),
     ],
     [],
   )
@@ -776,7 +776,7 @@ export default function Scene(props: Props) {
         </>
       )}
       {water && (
-        <group position={[-94, 0, 65]}>
+        <group position={[-99, 0, 63]}>
           <Ship
             active={hover === 0 || selected === 0}
             reduced={reduced}
