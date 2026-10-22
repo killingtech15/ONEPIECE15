@@ -261,6 +261,9 @@
   letter-spacing: 1px;
   margin-top: 2px;
 }
+.chart-place.current {
+  z-index: 2;
+}
 .chart-place.current .chart-pin {
   width: 12px;
   height: 12px;

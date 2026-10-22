@@ -1,8 +1,22 @@
 import { createContext, useContext } from 'react'
 import { island, places } from './world'
 import { water7Island, water7Places } from './water7'
+import { eniesIsland, eniesPlaces } from './enies'
 
 export const islands = {
+  'enies-lobby': {
+    island: eniesIsland,
+    places: eniesPlaces,
+    title: 'ENIES LOBBY',
+    region: 'THE JUDICIAL ISLAND',
+    subtitle: 'Across the divide, a promise.',
+    description:
+      'Cross the gates, follow the rooftops, and look into the abyss. A rescue remembered beneath a sky that never darkens.',
+    action: 'Cross the first gate',
+    chapter: '03',
+    weather: ['Perpetual daylight', 'Perpetual daylight'],
+    landmarkHint: 'Fourteen landmarks. From the Sea Train to the Gates of Justice.',
+  },
   alabasta: {
     island,
     places,

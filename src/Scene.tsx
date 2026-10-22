@@ -23,6 +23,8 @@ import { Ocean } from './Ocean'
 import { travel } from './world'
 import { useIsland } from './IslandContext'
 import Water7 from './Water7Scene'
+import EniesAtmosphere, { EniesCamera } from './EniesScene'
+import eniesLayout from './enies-layout.json' with { type: 'json' }
 import water7Layout from './water7-layout.json' with { type: 'json' }
 import titleFont from '@fontsource/cinzel/files/cinzel-latin-500-normal.woff?url'
 
@@ -314,7 +316,11 @@ function ArcTitle({ reduced }: { reduced: boolean }) {
     <group ref={group}>
       <Text
         font={titleFont}
-        fontSize={Math.min(80, Math.max(46, size.width * 0.058))}
+        fontSize={
+          title === 'ENIES LOBBY'
+            ? Math.min(size.height < 440 && size.width > 760 ? 40 : 64, size.width * 0.085)
+            : Math.min(80, Math.max(46, size.width * 0.058))
+        }
         letterSpacing={0.01}
         anchorX="left"
         anchorY="middle"
@@ -339,7 +345,11 @@ function Markers({ markerLayer }: Pick<Props, 'markerLayer'>) {
   const points = useMemo(
     () => [
       ...island.incidents.map(({ localPosition: p }) => new T.Vector3(p.x, p.y + 1.4, p.z)),
-      island.id === 'water-7' ? new T.Vector3(-83, 2, 94) : new T.Vector3(16, 1.6, 31),
+      island.id === 'enies-lobby'
+        ? new T.Vector3(...eniesLayout.merry).add(new T.Vector3(0, 2, 0))
+        : island.id === 'water-7'
+          ? new T.Vector3(-83, 2, 94)
+          : new T.Vector3(16, 1.6, 31),
     ],
     [],
   )
@@ -388,6 +398,7 @@ export function MarkerButtons({
       ))}
       <button
         className="map-marker merry-marker"
+        style={island.id === 'enies-lobby' && selected !== 13 ? { display: 'none' } : undefined}
         onClick={onWorldMap}
         aria-label={
           island.id === 'water-7'
@@ -739,13 +750,23 @@ function Effects({
 export default function Scene(props: Props) {
   const { island } = useIsland()
   const water = island.id === 'water-7'
+  const enies = island.id === 'enies-lobby'
   const { selected, hover, reduced, rain, onReady, quality } = props
   const sunlight = useRef<T.DirectionalLight>(null!)
   return (
     <Selection>
       <color attach="background" args={['#bcd8db']} />
-      <fog attach="fog" args={water ? ['#bcd8db', 650, 1400] : ['#bcd8db', 145, 300]} />
-      <CameraRig selected={selected} reduced={reduced} />
+      <fog
+        attach="fog"
+        args={
+          enies ? ['#bcd8db', 4000, 8500] : water ? ['#bcd8db', 650, 1400] : ['#bcd8db', 145, 300]
+        }
+      />
+      {enies ? (
+        <EniesCamera selected={selected} reduced={reduced} />
+      ) : (
+        <CameraRig selected={selected} reduced={reduced} />
+      )}
       <ambientLight intensity={1.5} />
       <directionalLight ref={sunlight} position={[-30, 60, 20]} intensity={2} />
       <Environment
@@ -758,10 +779,16 @@ export default function Scene(props: Props) {
       ) : (
         <Island onReady={onReady} />
       )}
-      <Ocean reduced={reduced} rain={rain} wide={water} />
+      <Ocean
+        reduced={reduced}
+        rain={rain}
+        wide={water || enies}
+        holeRadius={enies ? eniesLayout.chasmRadius : 0}
+      />
+      {enies && <EniesAtmosphere reduced={reduced} />}
       {selected === null && <ArcTitle reduced={reduced} />}
       <Markers {...props} />
-      {!water && (
+      {!water && !enies && (
         <>
           <PalaceFlags active={hover === 0 || selected === 0} reduced={reduced} />
           <Falcon active={hover === 1 || selected === 1} reduced={reduced} />
@@ -782,6 +809,11 @@ export default function Scene(props: Props) {
             reduced={reduced}
             onWorldMap={props.onWorldMap}
           />
+        </group>
+      )}
+      {enies && selected === 13 && (
+        <group position={[eniesLayout.merry[0] - 16, 0, eniesLayout.merry[2] - 31]}>
+          <Ship active={false} reduced={reduced} onWorldMap={props.onWorldMap} />
         </group>
       )}
       <Rain rain={rain} reduced={reduced} />

@@ -2,7 +2,7 @@
 
 ## Original application assets
 
-Alabasta and Water 7 geometry, interface icons, ocean shaders, scene layouts and interactions were authored for this project. Architecture uses the references below. Layouts are interpretive and distances are compressed. No third-party One Piece model or promotional still is shipped as site artwork.
+Alabasta, Water 7 and Enies Lobby geometry, interface icons, ocean shaders, scene layouts and interactions were authored for this project. Architecture uses the references below. Layouts are interpretive and distances are compressed. No third-party One Piece model or promotional still is shipped as site artwork.
 
 ## Water 7
 
@@ -34,7 +34,7 @@ The narrative descriptions are original short summaries, not copied episode text
 - [Sandora River](https://onepiece.fandom.com/wiki/Sandora_River), [Erumalu](https://onepiece.fandom.com/wiki/Erumalu), [Katorea](https://onepiece.fandom.com/wiki/Katorea): secondary references for the inland route, ruined oasis and rebel relocation.
 - [Red Line](https://onepiece.fandom.com/wiki/Red_Line), [Grand Line](https://onepiece.fandom.com/wiki/Grand_Line), [Calm Belt](https://onepiece.fandom.com/wiki/Calm_Belt): secondary world-geography references. Each selectable chart location also links to its individual reference.
 
-The world-chart illustration is the user-supplied [OnePiece15 Map.png](../OnePiece15%20Map.png), used at the user's request. The app ships an overview and lossless full-resolution tiles derived from that image, preserving its artwork and embedded attribution. The illustration's authorship is not claimed by this project. Interactive pins are traced to its locations; the optional route overlay and navigation controls are authored for this app. Alabasta and Water 7 have implemented 3D islands; the remaining locations have informational entries. Uncharted destinations are listed without pins.
+The world-chart illustration is the user-supplied [OnePiece15 Map.png](../OnePiece15%20Map.png), used at the user's request. The app ships an overview and lossless full-resolution tiles derived from that image, preserving its artwork and embedded attribution. The illustration's authorship is not claimed by this project. Interactive pins are traced to its locations; the optional route overlay and navigation controls are authored for this app. Alabasta, Water 7 and Enies Lobby have implemented 3D islands; the remaining locations have informational entries. Uncharted destinations are listed without pins.
 
 ## Environment
 
@@ -75,3 +75,18 @@ Viewed reference stills (research copies remain excluded from the public site):
 - [Puffing Tom exterior](https://static.wikia.nocookie.net/onepiece/images/3/3f/Puffing_Tom_Infobox.png/revision/latest/scale-to-width-down/1200?cb=20220701185753): green boiler, red/brown cab, brass details and passenger train proportions.
 
 These stills are visual reference material, not verified dimensioned plans. Detailed building placement remains illustrative.
+
+## Enies Lobby
+
+The exterior island is an original stylized rescue-era reconstruction with compressed distances. Exact dimensions, secondary facades and town buildings are interpretive. No reference images or extracted models are bundled. Lettering uses the Helvetiker license above. See [implementation notes](ENIES-LOBBY-IMPLEMENTATION.md).
+
+Visual references inspected:
+
+- [Annotated OPwiki overview](https://opwiki.org/images/Enies_Lobby_karte2.JPG): separated landmasses, causeway, courthouse, tower and waterfall geography; a secondary schematic.
+- [Tower still posted by OnePieceAnime](https://x.com/OnePieceAnime/status/1166062900794077191): stepped facade, green ornament, balconies and integrated lettering.
+- [Entrance still, episode 263](https://www.opgt.it/files/gallerie/tv/Ep_263/068.jpg): keyhole opening, white/gold towers and green gate panels; anime still hosted by a third party.
+- [Gates of Justice still](https://vignette.wikia.nocookie.net/onepiece/images/4/4d/Enies_Lobby%27s_Gate_of_Justice.png/revision/latest?cb=20160307220939&path-prefix=pt): rounded leaves, scale, seam and emblem.
+- [Bridge cross-section repost](https://x.com/hamaboh_manga/status/1795616665230787048): supported spans and below-water approach; secondary source.
+- [Enies Lobby location reference](https://onepiece.fandom.com/wiki/Enies_Lobby): secondary place naming and adjacency.
+
+Original short narrative summaries link to official episodes [263](https://one-piece.com/anime/263/index.html), [264](https://one-piece.com/anime/264/index.html), [272](https://one-piece.com/anime/272/index.html), [278](https://one-piece.com/anime/278/index.html), [285](https://one-piece.com/anime/285/index.html), [306](https://one-piece.com/anime/306/index.html), [308](https://one-piece.com/anime/308/index.html) and [310](https://one-piece.com/anime/310/index.html). Geographic stops without a precise event use a historical-setting label. The Merry appears only at the remembered escape viewpoint.

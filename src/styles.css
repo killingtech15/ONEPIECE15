@@ -1873,3 +1873,87 @@ kbd {
   display: none;
   pointer-events: none;
 }
+
+.is-enies:not(.has-departed):not(.is-exploring) .marker-layer {
+  display: none;
+}
+.is-enies .intro-copy {
+  max-width: 360px;
+}
+.is-enies .title-space {
+  height: 86px;
+}
+.is-enies.is-exploring .marker-layer {
+  display: none;
+}
+.is-enies .marker-layer {
+  clip-path: inset(104px 0 72px);
+}
+@media (max-width: 760px) {
+  .is-enies .title-space {
+    height: 48px;
+  }
+  .is-enies .intro-copy {
+    max-width: none;
+  }
+  .is-enies .chapter-kicker {
+    font-size: 8px;
+    letter-spacing: 0.12em;
+  }
+}
+
+/* Size entries from their full labels so long island names cannot collide. */
+.landmark-list {
+  grid-auto-columns: max-content;
+}
+.landmark {
+  min-width: 250px;
+}
+.landmark-index,
+.landmark-arrow {
+  flex-shrink: 0;
+}
+@media (max-width: 760px) {
+  .landmark {
+    min-width: 170px;
+  }
+}
+@media (min-width: 761px) and (max-width: 950px) and (max-height: 500px) {
+  .landmark {
+    min-width: 180px;
+  }
+  .is-enies .intro {
+    position: fixed;
+    top: 76px;
+    width: 360px;
+  }
+  .is-enies .title-space {
+    height: 45px;
+  }
+  .is-enies .intro-subtitle {
+    font-size: 16px;
+    margin: 8px 0;
+  }
+  .is-enies .intro-copy {
+    font-size: 12px;
+    line-height: 1.45;
+    margin-bottom: 8px;
+  }
+  .is-enies .journey-button {
+    min-height: 44px;
+    padding-bottom: 4px;
+  }
+  .is-enies .island-meta {
+    display: none;
+  }
+  .is-enies .scene-controls {
+    position: fixed;
+    left: auto;
+    right: 4.6%;
+    width: calc(50% - 32px);
+    bottom: calc(var(--dock-height, 70px) + 12px);
+  }
+  .is-enies .scene-controls .weather {
+    display: none;
+  }
+}

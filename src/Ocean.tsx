@@ -40,6 +40,7 @@ uniform float uNear;
 uniform float uFar;
 uniform float uTime;
 uniform float uRain;
+uniform float uHoleRadius;
 uniform vec2 uFogRange;
 uniform vec3 uDeep;
 uniform vec3 uShallow;
@@ -49,6 +50,7 @@ varying vec3 vNormal;
 varying float vDepth;
 float viewDepth(float d) { return (uNear*uFar) / (uFar - d*(uFar-uNear)); }
 void main() {
+  if(uHoleRadius > 0. && length(vWorld.xz) < uHoleRadius) discard;
   float sceneDepth = viewDepth(texture2D(uDepth, gl_FragCoord.xy/uResolution).r);
   float delta = max(0., sceneDepth-vDepth);
   vec3 deep = uDeep;
@@ -59,8 +61,10 @@ void main() {
   float band = sin(delta*5.5-uTime*1.4)*.5+.5;
   float foam = (1.-smoothstep(.05,1.3,delta))*smoothstep(.28,.75,band);
   col = mix(col,vec3(1.),foam*.55);
-  float ripple = sin(vWorld.x*.55+vWorld.z*.9+sin(vWorld.x*.18-vWorld.z*.25)*2.+uTime*.65);
-  col += smoothstep(.91,1.,ripple)*.018;
+  float ripplePhase = vWorld.x*.55+vWorld.z*.9+sin(vWorld.x*.18-vWorld.z*.25)*2.+uTime*.65;
+  float ripple = sin(ripplePhase);
+  float rippleVisibility = 1.-smoothstep(.5,3.,fwidth(ripplePhase));
+  col += smoothstep(.91,1.,ripple)*.018*rippleVisibility;
   col = mix(col,col*vec3(.79,.88,.97),uRain*.4);
   float fog = smoothstep(uFogRange.x,uFogRange.y,vDepth);
   col = mix(vec3(.85,.84,.76),col,smoothstep(.05,.52,gl_FragCoord.x/uResolution.x));
@@ -76,10 +80,12 @@ export function Ocean({
   reduced,
   rain,
   wide = false,
+  holeRadius = 0,
 }: {
   reduced: boolean
   rain: boolean
   wide?: boolean
+  holeRadius?: number
 }) {
   const mesh = useRef<T.Mesh>(null!)
   const { size, gl, camera } = useThree()
@@ -102,25 +108,40 @@ export function Ocean({
       uNear: { value: 0.1 },
       uFar: { value: 400 },
       uRain: { value: 0 },
-      uFogRange: { value: new T.Vector2(wide ? 800 : 100, wide ? 1700 : 210) },
+      uHoleRadius: { value: holeRadius },
+      uFogRange: {
+        value: new T.Vector2(
+          holeRadius ? 3500 : wide ? 800 : 100,
+          holeRadius ? 8000 : wide ? 1700 : 210,
+        ),
+      },
       uDeep: { value: new T.Color('#0077b6') },
       uShallow: { value: new T.Color('#58b7bd') },
       uSkyColor: { value: new T.Vector3(188 / 255, 216 / 255, 219 / 255) },
     }),
-    [depth, wide],
+    [depth, wide, holeRadius],
   )
   const geo = useMemo(
     () =>
-      new T.PlaneGeometry(wide ? 2400 : 1000, wide ? 2400 : 1000, 144, 144).rotateX(-Math.PI / 2),
-    [wide],
+      new T.PlaneGeometry(
+        holeRadius ? 9000 : wide ? 2400 : 1000,
+        holeRadius ? 9000 : wide ? 2400 : 1000,
+        144,
+        144,
+      ).rotateX(-Math.PI / 2),
+    [wide, holeRadius],
   )
   useFrame((state, dt) => {
-    if (!reduced) uniforms.uTime.value += Math.min(dt, 0.05)
-    uniforms.uAmplitude.value = reduced ? 0 : 1
-    uniforms.uRain.value = T.MathUtils.damp(uniforms.uRain.value, rain ? 1 : 0, 3, dt)
-    uniforms.uNear.value = (camera as T.PerspectiveCamera).near
-    uniforms.uFar.value = (camera as T.PerspectiveCamera).far
-    gl.getDrawingBufferSize(uniforms.uResolution.value)
+    // R3F may reconcile the uniforms object when the default camera changes.
+    // Update the material actually rendered, rather than a detached memo object.
+    const live = (mesh.current.material as T.ShaderMaterial).uniforms
+    if (!reduced) live.uTime.value += Math.min(dt, 0.05)
+    live.uAmplitude.value = reduced ? 0 : 1
+    live.uRain.value = T.MathUtils.damp(live.uRain.value, rain ? 1 : 0, 3, dt)
+    live.uNear.value = (camera as T.PerspectiveCamera).near
+    live.uFar.value = (camera as T.PerspectiveCamera).far
+    live.uDepth.value = depth.depthTexture
+    gl.getDrawingBufferSize(live.uResolution.value)
     const dimensions = `${depth.width}:${depth.height}`
     // Static baked land only. Refresh after the camera, and reuse while idle.
     if (

@@ -1,6 +1,6 @@
 # ONEPIECE15 · Grand Line Atlas
 
-A responsive world atlas that opens on the supplied OnePiece15 map. Select Alabasta or Water 7 to enter an interactive 3D diorama. Build output is a static site suitable for Vercel or another static host.
+A responsive world atlas that opens on the supplied OnePiece15 map. Select Alabasta, Water 7 or Enies Lobby to enter an interactive 3D diorama. Build output is a static site suitable for Vercel or another static host.
 
 ## Run
 
@@ -16,13 +16,13 @@ Open the URL printed by Vite. `npm run build` creates the static production site
 ## Explore
 
 - On phones, **Browse** opens map search, filters and location details. Drag to pan, pinch or use the zoom buttons, and tap a location. Island landmarks scroll horizontally; complete story cards fit their content without inner scrolling. Swipe downward to return to the journey, or use the return button. Markers stay hidden during the introduction and while a story is open so they cannot cover the text.
-- The world map opens first. Click **Alabasta** or **Water 7** on the chart or in search results to enter that island. The animated sea, clouds and travelling-ship transition plays on initial load and between the map and island scenes. Landmark stories, settings and weather changes have no loading transition.
+- The world map opens first. Click **Alabasta**, **Water 7** or **Enies Lobby** on the chart or in search results to enter that island. The animated sea, clouds and travelling-ship transition plays on initial load and between the map and island scenes. Landmark stories, settings and weather changes have no loading transition.
 - Scroll or select **Enter the kingdom** to follow the curved camera route.
 - Hover over a map marker or its bottom navigation entry to animate that landmark.
-- Select a landmark to stop scrolling and frame it beside its story. Each landmark has its own viewing radius, adapted to the screen aspect ratio. Scroll upward, press **Escape**, or select **Return to the journey** to restore the journey camera. If the story panel is scrolled down, scrolling upward first returns its text to the top.
-- Alabasta has eight landmarks: the royal palace, clock tower, Rain Dinners, Sandora River, Nanohana, Yuba, Erumalu and Katorea. Water 7 adds fourteen stops across its terraces, canals, shipyards and railway. Each stop has a short story and a source link.
+- Select a landmark to stop scrolling and frame it beside its story. Each landmark has its own viewing radius, adapted to the screen aspect ratio. Scroll upward, press **Escape**, or select **Return to the journey** to restore the journey camera. Phone story cards fit without inner scrolling.
+- Alabasta has eight landmarks: the royal palace, clock tower, Rain Dinners, Sandora River, Nanohana, Yuba, Erumalu and Katorea. Water 7 adds fourteen stops across its terraces, canals, shipyards and railway. Enies Lobby adds fourteen stops from Day Station through the waterfall chasm, Tower of Justice and Gates of Justice. Each stop has a short story and a source link.
 - Toggle **Desert sun** / **The rain returns** in Alabasta, or **Clear canals** / **Aqua Laguna** in Water 7. Water 7 also has waterfalls, a moving sea train and a Bull boat; reduced motion keeps these still.
-- Board the **Going Merry** at Nanohana's arrival waterfront (or select **The atlas**) to open the world chart. Pan, zoom, search the expanded world directory, toggle the Straw Hat route, and return to the same island journey position. Arrow keys pan the chart; +/− zoom. Alabasta and Water 7 have 3D scenes; other locations have chart entries.
+- Board the **Going Merry** at Nanohana's arrival waterfront (or select **The atlas**) to open the world chart. Pan, zoom, search the expanded world directory, toggle the Straw Hat route, and return to the same island journey position. Arrow keys pan the chart; +/− zoom. Alabasta, Water 7 and Enies Lobby have 3D scenes; other locations have chart entries.
 - Open **Field notes** for references or **Experience settings** for reduced motion and rendering quality.
 - Keyboard users can reach every landmark through the bottom navigation. Reduced-motion preferences are respected on initial load.
 
@@ -32,20 +32,21 @@ React 19, TypeScript, Vite, React Three Fiber, Drei, Three.js, GSAP, Lenis and p
 
 - Alabasta: original reference-based geometry, about 132,000 triangles, consolidated into one static island mesh, with smoother dome profiles and additional settlements.
 - Water 7: about 134,000 static triangles in 54 spatial batches sharing a baked lighting atlas. The model loads on first entry; normal frustum culling skips offscreen districts. It does not stream individual districts or use separate LOD assets. See [Water 7 implementation notes](docs/WATER-7-IMPLEMENTATION.md) for measurements and scope.
+- Enies Lobby: 46,032 static triangles, 26 spatial batches and a 5.97 MiB baked GLB. Includes a masked waterfall chasm, separate landmasses, perpetual daylight and a story-specific Merry. See [implementation notes](docs/ENIES-LOBBY-IMPLEMENTATION.md).
 - Blender Cycles diffuse lighting (color, direct and indirect light, including contact shading) baked into a 4096px atlas; optional OpenImageDenoise cleanup. The browser uses an unlit `MeshBasicMaterial`, with no realtime island shadows.
 - Custom Gerstner ocean vertex displacement and a scene-depth texture for shallow color and shoreline foam. The depth pass renders static land only, after the camera updates, and is reused while the camera is still. The Sandora channel is carved below the waterline.
 - Balanced rendering is the default: native antialiasing, DPR 1, lightweight transparent Log Pose glass, no postprocessing passes. Texture filtering uses mipmaps and up to 8× anisotropy.
 - High quality adds transmission (IOR 1.52, thickness 2.5, roughness 0.05, chromatic aberration 0.1), SMAA, selective needle bloom and camera-velocity distortion, at up to DPR 1.25. Both modes use a local HDR for reflections. The 3D render loop pauses while the world chart is open.
 - A child camera on a rig follows a Catmull–Rom curve. GSAP/Lenis drive normalized progress; focus transitions interrupt the route without resetting it.
 - The main title is Drei text geometry with a simplex-noise texture and shader discard reveal.
-- Eight landmark markers and a Going Merry entry share one DOM overlay. Their world anchors project directly after the camera update, without per-frame island raycasts or building-occlusion toggles. Marker hit circles remain 44px; the canvas and marker layer share the dock's measured boundary.
+- Each island�s landmark markers and Going Merry entry share one DOM overlay. Their world anchors project directly after the camera update, without per-frame island raycasts or building-occlusion toggles. Marker hit circles remain 44px; the canvas and marker layer share the dock's measured boundary.
 - The mainland stays anchored so marker coordinates and depth-based shore foam remain stable. The ship bobs, flags move, a falcon circles and hovered Rainbase stirs sand.
 
 ## Content and art boundaries
 
 This is an original stylized interpretation, **not an exact anime reconstruction or a geographically accurate world map**. Alubarna, Rainbase and the coast are compressed into one navigable scene. The ship is a simplified visual suggestion, not a detailed character asset. No ripped game models or AI-generated bitmap artwork are included.
 
-Alabasta has eight landmarks and Water 7 has fourteen; neither offers exhaustive arc coverage. The world chart uses the user-supplied [OnePiece15 Map.png](OnePiece15%20Map.png); the expanded location directory spans the four Blues, Paradise, the New World and uncharted destinations. Country and sea filters make the chart searchable. Locations with unknown positions have directory entries without fabricated pins. Story coverage includes manga spoilers through Elbaph, reviewed 17 October 2026; it is not a live chapter feed. Alabasta and Water 7 have 3D island models. Additional islands, audio and character models remain future work; real-phone performance still requires hardware profiling.
+Alabasta has eight landmarks; Water 7 and Enies Lobby each have fourteen. These exterior dioramas do not offer exhaustive arc coverage or playable interiors. The world chart uses the user-supplied [OnePiece15 Map.png](OnePiece15%20Map.png); the expanded location directory spans the four Blues, Paradise, the New World and uncharted destinations. Country and sea filters make the chart searchable. Locations with unknown positions have directory entries without fabricated pins. Story coverage includes manga spoilers through Elbaph, reviewed 17 October 2026; it is not a live chapter feed. Alabasta, Water 7 and Enies Lobby have 3D island models. Additional islands, audio and character models remain future work; real-phone performance still requires hardware profiling.
 
 ### Map image quality
 
@@ -75,6 +76,8 @@ blender --background --threads 6 --python scripts/bake-water7.py
 ```
 
 This exports `public/models/water7.glb` and its metrics. Running `node scripts/build-water7.mjs` without `--source` replaces the final model with a quick vertex-lit geometry preview; run the bake again before release.
+
+Rebuild Enies Lobby with `node scripts/build-enies-lobby.mjs --source`, then `blender --background --threads 6 --python scripts/bake-enies-lobby.py`. This exports its GLB and measured static metrics.
 
 ## Verification
 

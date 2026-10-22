@@ -9,6 +9,12 @@ import {
   type ChartPlace,
 } from './atlas'
 import './world-map.css'
+import type { IslandId } from './IslandContext'
+const sceneByPlace: Partial<Record<string, IslandId>> = {
+  alabasta: 'alabasta',
+  'water-seven': 'water-7',
+  'enies-lobby': 'enies-lobby',
+}
 
 type View = { x: number; y: number; scale: number }
 const WIDTH = 3000,
@@ -40,7 +46,7 @@ export default function WorldMap({
   interactive,
 }: {
   onClose: () => void
-  onEnterIsland: (id: 'alabasta' | 'water-7') => void
+  onEnterIsland: (id: IslandId) => void
   onReady: () => void
   interactive: boolean
 }) {
@@ -138,8 +144,8 @@ export default function WorldMap({
     })
   }
   const findPlace = (place: ChartPlace) => {
-    if (place.id === 'alabasta' || place.id === 'water-seven') {
-      onEnterIsland(place.id === 'alabasta' ? 'alabasta' : 'water-7')
+    if (sceneByPlace[place.id]) {
+      onEnterIsland(sceneByPlace[place.id]!)
       return
     }
     setSelected(place)
@@ -324,12 +330,10 @@ export default function WorldMap({
                   : 'Position follows the illustrated chart'}
               </span>
             </div>
-            {['alabasta', 'water-seven'].includes(selected.id) ? (
+            {sceneByPlace[selected.id] ? (
               <button
                 className="chart-enter"
-                onClick={() =>
-                  onEnterIsland(selected.id === 'water-seven' ? 'water-7' : 'alabasta')
-                }
+                onClick={() => onEnterIsland(sceneByPlace[selected.id]!)}
               >
                 Explore the island <span>↗</span>
               </button>
@@ -516,11 +520,10 @@ export default function WorldMap({
             {mappedPlaces.map((p) => (
               <button
                 key={p.id}
-                className={`chart-place ${selected.id === p.id ? 'selected' : ''} ${['alabasta', 'water-seven'].includes(p.id) ? 'current' : ''}`}
+                className={`chart-place ${selected.id === p.id ? 'selected' : ''} ${sceneByPlace[p.id] ? 'current' : ''}`}
                 style={{ left: `${(p.x / WIDTH) * 100}%`, top: `${(p.y / HEIGHT) * 100}%` }}
                 onClick={() => {
-                  if (p.id === 'alabasta' || p.id === 'water-seven')
-                    onEnterIsland(p.id === 'alabasta' ? 'alabasta' : 'water-7')
+                  if (sceneByPlace[p.id]) onEnterIsland(sceneByPlace[p.id]!)
                   else {
                     setSelected(p)
                     setBrowseOpen(true)
@@ -532,7 +535,7 @@ export default function WorldMap({
                 <span className="chart-pin" />
                 <span className="chart-place-label">
                   {p.name}
-                  {['alabasta', 'water-seven'].includes(p.id) && <small>EXPLORE IN 3D</small>}
+                  {sceneByPlace[p.id] && <small>EXPLORE IN 3D</small>}
                 </span>
               </button>
             ))}

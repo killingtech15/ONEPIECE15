@@ -111,6 +111,7 @@ export default function App() {
   const config = islands[activeIsland]
   const { island, places } = config
   const isWater = activeIsland === 'water-7'
+  const isEnies = activeIsland === 'enies-lobby'
   const savedScroll = useRef<Record<string, number>>({})
   const [selected, setSelected] = useState<number | null>(null)
   const [hover, setHover] = useState<number | null>(null)
@@ -315,7 +316,7 @@ export default function App() {
     <IslandContext.Provider value={config}>
       <div
         ref={root}
-        className={`app ${isWater ? 'is-water7' : ''} ${departed ? 'has-departed' : ''} ${selected !== null ? 'is-exploring' : ''} ${reduced ? 'reduced-motion' : ''}`}
+        className={`app ${isWater ? 'is-water7' : ''} ${isEnies ? 'is-enies' : ''} ${departed ? 'has-departed' : ''} ${selected !== null ? 'is-exploring' : ''} ${reduced ? 'reduced-motion' : ''}`}
       >
         <div inert={worldOpen || !ready} aria-hidden={worldOpen || undefined}>
           <a className="skip-link" href="#landmarks">
@@ -417,7 +418,9 @@ export default function App() {
                   </div>
                 </section>
                 <div className="travel-caption">
-                  <span className="eyebrow">{isWater ? config.region : 'THE DESERT KINGDOM'}</span>
+                  <span className="eyebrow">
+                    {isWater || isEnies ? config.region : 'THE DESERT KINGDOM'}
+                  </span>
                   <p>Every place holds a story.</p>
                   <span className="mono">Choose a landmark to look closer.</span>
                 </div>
@@ -444,12 +447,16 @@ export default function App() {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  {isWater || selected === 7 ? '' : 'EPISODE '}
+                  {isWater ||
+                  (isEnies && island.incidents[selected].episodes === 'Historical setting') ||
+                  (!isEnies && selected === 7)
+                    ? ''
+                    : 'EPISODE '}
                   {island.incidents[selected].episodes}
                   <span>{isWater ? 'Official story reference' : 'Official episode notes'} ↗</span>
                 </a>
                 <div className="story-actions">
-                  {(isWater ? selected === 4 : selected === 0) && (
+                  {!isEnies && (isWater ? selected === 4 : selected === 0) && (
                     <button
                       className={`rain-story ${rain ? 'active' : ''}`}
                       onClick={() => setRain((v) => !v)}
@@ -485,18 +492,25 @@ export default function App() {
               </div>
             </aside>
             <div className="scene-controls">
-              <button
-                className={rain ? 'weather active' : 'weather'}
-                onClick={() => setRain((v) => !v)}
-                aria-pressed={rain}
-              >
-                <Icon name={rain ? 'rain' : 'sun'} />
-                <span>{config.weather[rain ? 1 : 0]}</span>
-              </button>
+              {isEnies ? (
+                <span className="weather">
+                  <Icon name="sun" />
+                  Perpetual daylight
+                </span>
+              ) : (
+                <button
+                  className={rain ? 'weather active' : 'weather'}
+                  onClick={() => setRain((v) => !v)}
+                  aria-pressed={rain}
+                >
+                  <Icon name={rain ? 'rain' : 'sun'} />
+                  <span>{config.weather[rain ? 1 : 0]}</span>
+                </button>
+              )}
               <button className="merry-departure" onClick={openWorld}>
                 <Icon name="map" />
                 <span>
-                  {isWater ? 'Return to the world chart' : 'Set sail on the Going Merry'}
+                  {isWater || isEnies ? 'Return to the world chart' : 'Set sail on the Going Merry'}
                   <small>OPEN THE WORLD MAP</small>
                 </span>
                 <Icon name="arrow" />
@@ -612,7 +626,9 @@ export default function App() {
                   The architecture is an original 3D interpretation based on anime references. The
                   desert settlements and Water 7’s terraces, shipyards and rail outposts form
                   compressed dioramas. Distances and placements are illustrative; Water 7 uses a
-                  historical arrival setting, with later events described in its stories.
+                  historical arrival setting, with later events described in its stories. Enies
+                  Lobby reconstructs the intact rescue-era architecture; the Merry appears at the
+                  escape viewpoint as a remembered event. Distances are compressed for this atlas.
                 </p>
                 <p>
                   Story summaries link to official episode notes and location references. One Piece
@@ -627,9 +643,11 @@ export default function App() {
                 <div className="credits">
                   <a
                     href={
-                      isWater
-                        ? 'https://one-piece.com/story/water_seven/index.html'
-                        : 'https://one-piece.com/anime/126/index.html'
+                      isEnies
+                        ? 'https://one-piece.com/story/enies_lobby/index.html'
+                        : isWater
+                          ? 'https://one-piece.com/story/water_seven/index.html'
+                          : 'https://one-piece.com/anime/126/index.html'
                     }
                     target="_blank"
                     rel="noreferrer"
