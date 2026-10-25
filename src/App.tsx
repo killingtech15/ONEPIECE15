@@ -111,6 +111,7 @@ export default function App() {
   const config = islands[activeIsland]
   const { island, places } = config
   const isWater = activeIsland === 'water-7'
+  const isThriller = activeIsland === 'thriller-bark'
   const isEnies = activeIsland === 'enies-lobby'
   const savedScroll = useRef<Record<string, number>>({})
   const [selected, setSelected] = useState<number | null>(null)
@@ -316,7 +317,7 @@ export default function App() {
     <IslandContext.Provider value={config}>
       <div
         ref={root}
-        className={`app ${isWater ? 'is-water7' : ''} ${isEnies ? 'is-enies' : ''} ${departed ? 'has-departed' : ''} ${selected !== null ? 'is-exploring' : ''} ${reduced ? 'reduced-motion' : ''}`}
+        className={`app ${isWater ? 'is-water7' : ''} ${isEnies ? 'is-enies' : ''} ${isThriller ? 'is-thriller' : ''} ${departed ? 'has-departed' : ''} ${selected !== null ? 'is-exploring' : ''} ${reduced ? 'reduced-motion' : ''}`}
       >
         <div inert={worldOpen || !ready} aria-hidden={worldOpen || undefined}>
           <a className="skip-link" href="#landmarks">
@@ -419,7 +420,7 @@ export default function App() {
                 </section>
                 <div className="travel-caption">
                   <span className="eyebrow">
-                    {isWater || isEnies ? config.region : 'THE DESERT KINGDOM'}
+                    {isWater || isEnies || isThriller ? config.region : 'THE DESERT KINGDOM'}
                   </span>
                   <p>Every place holds a story.</p>
                   <span className="mono">Choose a landmark to look closer.</span>
@@ -447,16 +448,12 @@ export default function App() {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  {isWater ||
-                  (isEnies && island.incidents[selected].episodes === 'Historical setting') ||
-                  (!isEnies && selected === 7)
-                    ? ''
-                    : 'EPISODE '}
+                  {/^\d/.test(island.incidents[selected].episodes) ? 'EPISODE ' : ''}
                   {island.incidents[selected].episodes}
                   <span>{isWater ? 'Official story reference' : 'Official episode notes'} ↗</span>
                 </a>
                 <div className="story-actions">
-                  {!isEnies && (isWater ? selected === 4 : selected === 0) && (
+                  {!isEnies && !isThriller && (isWater ? selected === 4 : selected === 0) && (
                     <button
                       className={`rain-story ${rain ? 'active' : ''}`}
                       onClick={() => setRain((v) => !v)}
@@ -503,14 +500,16 @@ export default function App() {
                   onClick={() => setRain((v) => !v)}
                   aria-pressed={rain}
                 >
-                  <Icon name={rain ? 'rain' : 'sun'} />
+                  <Icon name={isThriller ? 'compass' : rain ? 'rain' : 'sun'} />
                   <span>{config.weather[rain ? 1 : 0]}</span>
                 </button>
               )}
               <button className="merry-departure" onClick={openWorld}>
                 <Icon name="map" />
                 <span>
-                  {isWater || isEnies ? 'Return to the world chart' : 'Set sail on the Going Merry'}
+                  {isWater || isEnies || isThriller
+                    ? 'Return to the world chart'
+                    : 'Set sail on the Going Merry'}
                   <small>OPEN THE WORLD MAP</small>
                 </span>
                 <Icon name="arrow" />
@@ -619,8 +618,8 @@ export default function App() {
                 <h2>Made for the journey.</h2>
                 <p>
                   An independent fan-made world atlas inspired by Eiichiro Oda’s One Piece. The
-                  chart spans all four seas and the New World through Elbaph. Alabasta and Water 7
-                  revisit the desert-kingdom and canal-city adventures in interactive 3D.
+                  chart spans all four seas and the New World through Elbaph. Explore Alabasta,
+                  Water 7, Enies Lobby and Thriller Bark in interactive 3D.
                 </p>
                 <p>
                   The architecture is an original 3D interpretation based on anime references. The
@@ -628,7 +627,9 @@ export default function App() {
                   compressed dioramas. Distances and placements are illustrative; Water 7 uses a
                   historical arrival setting, with later events described in its stories. Enies
                   Lobby reconstructs the intact rescue-era architecture; the Merry appears at the
-                  escape viewpoint as a remembered event. Distances are compressed for this atlas.
+                  escape viewpoint as a remembered event. Thriller Bark preserves an intact
+                  arrival-era ship, with four interpreted room cutaways and later events recalled in
+                  stories. Distances are compressed for this atlas.
                 </p>
                 <p>
                   Story summaries link to official episode notes and location references. One Piece
@@ -643,11 +644,13 @@ export default function App() {
                 <div className="credits">
                   <a
                     href={
-                      isEnies
-                        ? 'https://one-piece.com/story/enies_lobby/index.html'
-                        : isWater
-                          ? 'https://one-piece.com/story/water_seven/index.html'
-                          : 'https://one-piece.com/anime/126/index.html'
+                      isThriller
+                        ? 'https://one-piece.com/story/thriller_bark/index.html'
+                        : isEnies
+                          ? 'https://one-piece.com/story/enies_lobby/index.html'
+                          : isWater
+                            ? 'https://one-piece.com/story/water_seven/index.html'
+                            : 'https://one-piece.com/anime/126/index.html'
                     }
                     target="_blank"
                     rel="noreferrer"

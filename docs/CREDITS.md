@@ -90,3 +90,12 @@ Visual references inspected:
 - [Enies Lobby location reference](https://onepiece.fandom.com/wiki/Enies_Lobby): secondary place naming and adjacency.
 
 Original short narrative summaries link to official episodes [263](https://one-piece.com/anime/263/index.html), [264](https://one-piece.com/anime/264/index.html), [272](https://one-piece.com/anime/272/index.html), [278](https://one-piece.com/anime/278/index.html), [285](https://one-piece.com/anime/285/index.html), [306](https://one-piece.com/anime/306/index.html), [308](https://one-piece.com/anime/308/index.html) and [310](https://one-piece.com/anime/310/index.html). Geographic stops without a precise event use a historical-setting label. The Merry appears only at the remembered escape viewpoint.
+
+
+## Thriller Bark
+
+An original, compressed arrival-era ship with three masts, outer hull, ruined inner wall, forest, two mansions and four interpreted room cutaways. The Thousand Sunny and static Oars figure are original stylized geometry. Exact distances, room footprints and secondary details are artistic choices; later battles remain narrative memories. No extracted models, anime textures or song recordings are bundled. Lettering uses the Helvetiker license listed above.
+
+The [research plan](THRILLER-BARK-PLAN.md#inspected-evidence) links the inspected anime stills: whole ship and arrival, Hogback exterior/laboratory, mast mansion, Wonder Garden, Perona's room, chapel, forest/cemetery and Oars' icy chamber. Research images remain excluded from production assets. See [implementation notes](THRILLER-BARK-IMPLEMENTATION.md).
+
+Short original stories reference the [official arc summary](https://one-piece.com/story/thriller_bark/index.html) and episodes [339](https://one-piece.com/anime/339/index.html), [340](https://one-piece.com/anime/340/index.html), [342](https://one-piece.com/anime/342/index.html), [345](https://one-piece.com/anime/345/index.html), [350](https://one-piece.com/anime/350/index.html), [358](https://one-piece.com/anime/358/index.html), [361](https://one-piece.com/anime/361/index.html), [362](https://one-piece.com/anime/362/index.html), [374](https://one-piece.com/anime/374/index.html), [377](https://one-piece.com/anime/377/index.html) and [380](https://one-piece.com/anime/380/index.html). Unsurveyed event clearings are explicitly illustrative.

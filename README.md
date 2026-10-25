@@ -1,6 +1,6 @@
 # ONEPIECE15 · Grand Line Atlas
 
-A responsive world atlas that opens on the supplied OnePiece15 map. Select Alabasta, Water 7 or Enies Lobby to enter an interactive 3D diorama. Build output is a static site suitable for Vercel or another static host.
+A responsive world atlas that opens on the supplied OnePiece15 map. Select Alabasta, Water 7, Enies Lobby or Thriller Bark to enter an interactive 3D diorama. Build output is a static site suitable for Vercel or another static host.
 
 ## Run
 
@@ -22,7 +22,8 @@ Open the URL printed by Vite. `npm run build` creates the static production site
 - Select a landmark to stop scrolling and frame it beside its story. Each landmark has its own viewing radius, adapted to the screen aspect ratio. Scroll upward, press **Escape**, or select **Return to the journey** to restore the journey camera. Phone story cards fit without inner scrolling.
 - Alabasta has eight landmarks: the royal palace, clock tower, Rain Dinners, Sandora River, Nanohana, Yuba, Erumalu and Katorea. Water 7 adds fourteen stops across its terraces, canals, shipyards and railway. Enies Lobby adds fourteen stops from Day Station through the waterfall chasm, Tower of Justice and Gates of Justice. Each stop has a short story and a source link.
 - Toggle **Desert sun** / **The rain returns** in Alabasta, or **Clear canals** / **Aqua Laguna** in Water 7. Water 7 also has waterfalls, a moving sea train and a Bull boat; reduced motion keeps these still.
-- Board the **Going Merry** at Nanohana's arrival waterfront (or select **The atlas**) to open the world chart. Pan, zoom, search the expanded world directory, toggle the Straw Hat route, and return to the same island journey position. Arrow keys pan the chart; +/− zoom. Alabasta, Water 7 and Enies Lobby have 3D scenes; other locations have chart entries.
+- Board the **Going Merry** at Nanohana's arrival waterfront (or select **The atlas**) to open the world chart. Pan, zoom, search the expanded world directory, toggle the Straw Hat route, and return to the same island journey position. Arrow keys pan the chart; +/− zoom. Alabasta, Water 7, Enies Lobby and Thriller Bark have 3D scenes; other locations have chart entries.
+- Thriller Bark has sixteen viewpoints, four room cutaways, and **Florian mist** / **Clearer view**. The Sunny bobs gently; reduced motion freezes it. Rooms close when returning to the journey.
 - Open **Field notes** for references or **Experience settings** for reduced motion and rendering quality.
 - Keyboard users can reach every landmark through the bottom navigation. Reduced-motion preferences are respected on initial load.
 
@@ -32,6 +33,7 @@ React 19, TypeScript, Vite, React Three Fiber, Drei, Three.js, GSAP, Lenis and p
 
 - Alabasta: original reference-based geometry, about 132,000 triangles, consolidated into one static island mesh, with smoother dome profiles and additional settlements.
 - Water 7: about 134,000 static triangles in 54 spatial batches sharing a baked lighting atlas. The model loads on first entry; normal frustum culling skips offscreen districts. It does not stream individual districts or use separate LOD assets. See [Water 7 implementation notes](docs/WATER-7-IMPLEMENTATION.md) for measurements and scope.
+- Thriller Bark: 149,846 authored triangles in 47 batches, including four selectable room cutaways, a separate Thousand Sunny, three masts and the surrounding ship hull. See [implementation notes](docs/THRILLER-BARK-IMPLEMENTATION.md).
 - Enies Lobby: 46,032 static triangles, 26 spatial batches and a 5.97 MiB baked GLB. Includes a masked waterfall chasm, separate landmasses, perpetual daylight and a story-specific Merry. See [implementation notes](docs/ENIES-LOBBY-IMPLEMENTATION.md).
 - Blender Cycles diffuse lighting (color, direct and indirect light, including contact shading) baked into a 4096px atlas; optional OpenImageDenoise cleanup. The browser uses an unlit `MeshBasicMaterial`, with no realtime island shadows.
 - Custom Gerstner ocean vertex displacement and a scene-depth texture for shallow color and shoreline foam. The depth pass renders static land only, after the camera updates, and is reused while the camera is still. The Sandora channel is carved below the waterline.

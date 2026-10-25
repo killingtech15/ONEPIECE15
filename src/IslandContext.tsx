@@ -1,9 +1,23 @@
 import { createContext, useContext } from 'react'
 import { island, places } from './world'
 import { water7Island, water7Places } from './water7'
+import { thrillerIsland, thrillerPlaces } from './thriller'
 import { eniesIsland, eniesPlaces } from './enies'
 
 export const islands = {
+  'thriller-bark': {
+    island: thrillerIsland,
+    places: thrillerPlaces,
+    title: 'THRILLER BARK',
+    region: 'THE ISLAND SHIP',
+    subtitle: 'A shadow beyond the mist.',
+    description:
+      'Pass the grinning gate, follow the forest road, and discover the mansions beneath three towering masts.',
+    action: 'Enter the haunted ship',
+    chapter: '04',
+    weather: ['Florian mist', 'Clearer view'],
+    landmarkHint: 'Sixteen landmarks. From the mouth gate to the tallest mast.',
+  },
   'enies-lobby': {
     island: eniesIsland,
     places: eniesPlaces,

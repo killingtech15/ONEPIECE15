@@ -1874,29 +1874,29 @@ kbd {
   pointer-events: none;
 }
 
-.is-enies:not(.has-departed):not(.is-exploring) .marker-layer {
+:is(.is-enies, .is-thriller):not(.has-departed):not(.is-exploring) .marker-layer {
   display: none;
 }
-.is-enies .intro-copy {
+:is(.is-enies, .is-thriller) .intro-copy {
   max-width: 360px;
 }
-.is-enies .title-space {
+:is(.is-enies, .is-thriller) .title-space {
   height: 86px;
 }
-.is-enies.is-exploring .marker-layer {
+:is(.is-enies, .is-thriller).is-exploring .marker-layer {
   display: none;
 }
-.is-enies .marker-layer {
+:is(.is-enies, .is-thriller) .marker-layer {
   clip-path: inset(104px 0 72px);
 }
 @media (max-width: 760px) {
-  .is-enies .title-space {
+  :is(.is-enies, .is-thriller) .title-space {
     height: 48px;
   }
-  .is-enies .intro-copy {
+  :is(.is-enies, .is-thriller) .intro-copy {
     max-width: none;
   }
-  .is-enies .chapter-kicker {
+  :is(.is-enies, .is-thriller) .chapter-kicker {
     font-size: 8px;
     letter-spacing: 0.12em;
   }
@@ -1922,38 +1922,44 @@ kbd {
   .landmark {
     min-width: 180px;
   }
-  .is-enies .intro {
+  :is(.is-enies, .is-thriller) .intro {
     position: fixed;
     top: 76px;
     width: 360px;
   }
-  .is-enies .title-space {
+  :is(.is-enies, .is-thriller) .title-space {
     height: 45px;
   }
-  .is-enies .intro-subtitle {
+  :is(.is-enies, .is-thriller) .intro-subtitle {
     font-size: 16px;
     margin: 8px 0;
   }
-  .is-enies .intro-copy {
+  :is(.is-enies, .is-thriller) .intro-copy {
     font-size: 12px;
     line-height: 1.45;
     margin-bottom: 8px;
   }
-  .is-enies .journey-button {
+  :is(.is-enies, .is-thriller) .journey-button {
     min-height: 44px;
     padding-bottom: 4px;
   }
-  .is-enies .island-meta {
+  :is(.is-enies, .is-thriller) .island-meta {
     display: none;
   }
-  .is-enies .scene-controls {
+  :is(.is-enies, .is-thriller) .scene-controls {
     position: fixed;
     left: auto;
     right: 4.6%;
     width: calc(50% - 32px);
     bottom: calc(var(--dock-height, 70px) + 12px);
   }
-  .is-enies .scene-controls .weather {
+  :is(.is-enies, .is-thriller) .scene-controls .weather {
     display: none;
   }
+}
+
+/* Complete touch actions without shrinking the story type. */
+.is-thriller .story .back-button,
+.is-thriller .story .episode-link {
+  min-height: 44px;
 }

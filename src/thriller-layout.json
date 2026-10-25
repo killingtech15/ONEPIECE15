@@ -1,0 +1,122 @@
+{
+  "outerRadius": 160,
+  "landRadius": [100, 92],
+  "landTop": 10,
+  "manor": [0, 10, 22],
+  "mast": [0, 10, -50],
+  "sunny": [45, 0, 116],
+  "overviewTarget": [0, 65, 0],
+  "overviewRadius": 190,
+  "landmarks": [
+    {
+      "target": [0, 8, 155],
+      "radius": 36,
+      "offset": [32, 25, 65]
+    },
+    {
+      "target": [45, 7, 116],
+      "radius": 12,
+      "offset": [16, 34, 24]
+    },
+    {
+      "target": [-20, 8, 87],
+      "radius": 23,
+      "offset": [-25, 23, 38]
+    },
+    {
+      "target": [-49, 17, 40],
+      "radius": 30,
+      "offset": [-30, 30, 35]
+    },
+    {
+      "target": [57, 15, 34],
+      "radius": 26,
+      "offset": [30, 30, 45]
+    },
+    {
+      "target": [0, 31, 22],
+      "radius": 48,
+      "offset": [36, 20, 70]
+    },
+    {
+      "target": [0, 43, 22],
+      "radius": 20,
+      "offset": [20, 26, 36],
+      "room": "lab"
+    },
+    {
+      "target": [0, 28, -12],
+      "radius": 24,
+      "offset": [70, 65, 0]
+    },
+    {
+      "target": [35, 56, -50],
+      "radius": 17,
+      "offset": [12, 28, 40],
+      "room": "perona"
+    },
+    {
+      "target": [-35, 29, -50],
+      "radius": 22,
+      "offset": [-24, 22, 40],
+      "room": "freezer"
+    },
+    {
+      "target": [40, 16, -21],
+      "radius": 19,
+      "offset": [30, 50, 40],
+      "room": "chapel"
+    },
+    {
+      "target": [0, 58, -50],
+      "radius": 56,
+      "offset": [-50, 25, 85]
+    },
+    {
+      "target": [0, 53, 22],
+      "radius": 31,
+      "offset": [-32, 27, 50]
+    },
+    {
+      "target": [54, 12, -51],
+      "radius": 29,
+      "offset": [40, 32, -12]
+    },
+    {
+      "target": [-56, 12, -48],
+      "radius": 23,
+      "offset": [-30, 30, 30]
+    },
+    {
+      "target": [0, 50, 0],
+      "radius": 180,
+      "offset": [230, 190, 290]
+    }
+  ],
+  "journey": [
+    {
+      "eye": [330, 290, 440],
+      "look": [0, 65, 0]
+    },
+    {
+      "eye": [60, 95, 230],
+      "look": [0, 20, 65]
+    },
+    {
+      "eye": [-125, 90, 105],
+      "look": [-15, 28, 20]
+    },
+    {
+      "eye": [140, 130, 45],
+      "look": [0, 45, -15]
+    },
+    {
+      "eye": [140, 155, -130],
+      "look": [0, 65, -50]
+    },
+    {
+      "eye": [300, 260, 350],
+      "look": [0, 60, 0]
+    }
+  ]
+}

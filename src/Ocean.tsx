@@ -81,11 +81,15 @@ export function Ocean({
   rain,
   wide = false,
   holeRadius = 0,
+  haunted = false,
+  depthKey = null,
 }: {
   reduced: boolean
   rain: boolean
   wide?: boolean
   holeRadius?: number
+  haunted?: boolean
+  depthKey?: number | null
 }) {
   const mesh = useRef<T.Mesh>(null!)
   const { size, gl, camera } = useThree()
@@ -115,21 +119,25 @@ export function Ocean({
           holeRadius ? 8000 : wide ? 1700 : 210,
         ),
       },
-      uDeep: { value: new T.Color('#0077b6') },
-      uShallow: { value: new T.Color('#58b7bd') },
-      uSkyColor: { value: new T.Vector3(188 / 255, 216 / 255, 219 / 255) },
+      uDeep: { value: new T.Color(haunted ? '#273e59' : '#0077b6') },
+      uShallow: { value: new T.Color(haunted ? '#687d8e' : '#58b7bd') },
+      uSkyColor: {
+        value: haunted
+          ? new T.Vector3(155 / 255, 165 / 255, 182 / 255)
+          : new T.Vector3(188 / 255, 216 / 255, 219 / 255),
+      },
     }),
-    [depth, wide, holeRadius],
+    [depth, wide, holeRadius, haunted],
   )
   const geo = useMemo(
     () =>
       new T.PlaneGeometry(
-        holeRadius ? 9000 : wide ? 2400 : 1000,
-        holeRadius ? 9000 : wide ? 2400 : 1000,
+        holeRadius || haunted ? 9000 : wide ? 2400 : 1000,
+        holeRadius || haunted ? 9000 : wide ? 2400 : 1000,
         144,
         144,
       ).rotateX(-Math.PI / 2),
-    [wide, holeRadius],
+    [wide, holeRadius, haunted],
   )
   useFrame((state, dt) => {
     // R3F may reconcile the uniforms object when the default camera changes.
@@ -142,7 +150,7 @@ export function Ocean({
     live.uFar.value = (camera as T.PerspectiveCamera).far
     live.uDepth.value = depth.depthTexture
     gl.getDrawingBufferSize(live.uResolution.value)
-    const dimensions = `${depth.width}:${depth.height}`
+    const dimensions = `${depth.width}:${depth.height}:${depthKey}`
     // Static baked land only. Refresh after the camera, and reuse while idle.
     if (
       !previousView.current.equals(camera.matrixWorld) ||
