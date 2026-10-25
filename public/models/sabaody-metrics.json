@@ -1,0 +1,6 @@
+{
+  "triangles": 220532,
+  "districtMeshes": 73,
+  "bytes": 14065068,
+  "lighting": "Blender Cycles diffuse color, direct and indirect lighting; shared 4096px atlas; 96 samples, OIDN texture cleanup"
+}

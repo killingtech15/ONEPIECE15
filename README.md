@@ -33,6 +33,7 @@ React 19, TypeScript, Vite, React Three Fiber, Drei, Three.js, GSAP, Lenis and p
 
 - Alabasta: original reference-based geometry, about 132,000 triangles, consolidated into one static island mesh, with smoother dome profiles and additional settlements.
 - Water 7: about 134,000 static triangles in 54 spatial batches sharing a baked lighting atlas. The model loads on first entry; normal frustum culling skips offscreen districts. It does not stream individual districts or use separate LOD assets. See [Water 7 implementation notes](docs/WATER-7-IMPLEMENTATION.md) for measurements and scope.
+- Sabaody Archipelago: 79 numbered groves, 16 landmark views, an auction cutaway, instanced bubbles and an upright-gondola Ferris wheel. The 13.41 MiB baked model has 220,532 triangles in 73 batches. See [implementation notes](docs/SABAODY-IMPLEMENTATION.md).
 - Thriller Bark: 149,846 authored triangles in 47 batches, including four selectable room cutaways, a separate Thousand Sunny, three masts and the surrounding ship hull. See [implementation notes](docs/THRILLER-BARK-IMPLEMENTATION.md).
 - Enies Lobby: 46,032 static triangles, 26 spatial batches and a 5.97 MiB baked GLB. Includes a masked waterfall chasm, separate landmasses, perpetual daylight and a story-specific Merry. See [implementation notes](docs/ENIES-LOBBY-IMPLEMENTATION.md).
 - Blender Cycles diffuse lighting (color, direct and indirect light, including contact shading) baked into a 4096px atlas; optional OpenImageDenoise cleanup. The browser uses an unlit `MeshBasicMaterial`, with no realtime island shadows.
@@ -48,7 +49,7 @@ React 19, TypeScript, Vite, React Three Fiber, Drei, Three.js, GSAP, Lenis and p
 
 This is an original stylized interpretation, **not an exact anime reconstruction or a geographically accurate world map**. Alubarna, Rainbase and the coast are compressed into one navigable scene. The ship is a simplified visual suggestion, not a detailed character asset. No ripped game models or AI-generated bitmap artwork are included.
 
-Alabasta has eight landmarks; Water 7 and Enies Lobby each have fourteen. These exterior dioramas do not offer exhaustive arc coverage or playable interiors. The world chart uses the user-supplied [OnePiece15 Map.png](OnePiece15%20Map.png); the expanded location directory spans the four Blues, Paradise, the New World and uncharted destinations. Country and sea filters make the chart searchable. Locations with unknown positions have directory entries without fabricated pins. Story coverage includes manga spoilers through Elbaph, reviewed 17 October 2026; it is not a live chapter feed. Alabasta, Water 7 and Enies Lobby have 3D island models. Additional islands, audio and character models remain future work; real-phone performance still requires hardware profiling.
+Alabasta has eight landmarks; Water 7 and Enies Lobby each have fourteen; Thriller Bark and Sabaody each have sixteen. These exterior dioramas do not offer exhaustive arc coverage or playable interiors. The world chart uses the user-supplied [OnePiece15 Map.png](OnePiece15%20Map.png); the expanded location directory spans the four Blues, Paradise, the New World and uncharted destinations. Country and sea filters make the chart searchable. Locations with unknown positions have directory entries without fabricated pins. Story coverage includes manga spoilers through Elbaph, reviewed 17 October 2026; it is not a live chapter feed. Alabasta, Water 7, Enies Lobby, Thriller Bark and Sabaody have 3D island models. Additional islands, audio and character models remain future work; real-phone performance still requires hardware profiling.
 
 ### Map image quality
 
@@ -80,6 +81,8 @@ blender --background --threads 6 --python scripts/bake-water7.py
 This exports `public/models/water7.glb` and its metrics. Running `node scripts/build-water7.mjs` without `--source` replaces the final model with a quick vertex-lit geometry preview; run the bake again before release.
 
 Rebuild Enies Lobby with `node scripts/build-enies-lobby.mjs --source`, then `blender --background --threads 6 --python scripts/bake-enies-lobby.py`. This exports its GLB and measured static metrics.
+
+Rebuild Sabaody with `node scripts/build-sabaody.mjs --source`, then Blender running `scripts/bake-sabaody.py` and `scripts/denoise-sabaody.py`. See its implementation notes for the weighted lighting atlas and measurement details.
 
 ## Verification
 

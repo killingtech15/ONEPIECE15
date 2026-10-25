@@ -82,6 +82,7 @@ export function Ocean({
   wide = false,
   holeRadius = 0,
   haunted = false,
+  mangrove = false,
   depthKey = null,
 }: {
   reduced: boolean
@@ -89,6 +90,7 @@ export function Ocean({
   wide?: boolean
   holeRadius?: number
   haunted?: boolean
+  mangrove?: boolean
   depthKey?: number | null
 }) {
   const mesh = useRef<T.Mesh>(null!)
@@ -115,29 +117,31 @@ export function Ocean({
       uHoleRadius: { value: holeRadius },
       uFogRange: {
         value: new T.Vector2(
-          holeRadius ? 3500 : wide ? 800 : 100,
-          holeRadius ? 8000 : wide ? 1700 : 210,
+          mangrove ? 1800 : holeRadius ? 3500 : wide ? 800 : 100,
+          mangrove ? 6500 : holeRadius ? 8000 : wide ? 1700 : 210,
         ),
       },
-      uDeep: { value: new T.Color(haunted ? '#273e59' : '#0077b6') },
-      uShallow: { value: new T.Color(haunted ? '#687d8e' : '#58b7bd') },
+      uDeep: { value: new T.Color(mangrove ? '#298f9d' : haunted ? '#273e59' : '#0077b6') },
+      uShallow: { value: new T.Color(mangrove ? '#98d4b4' : haunted ? '#687d8e' : '#58b7bd') },
       uSkyColor: {
-        value: haunted
-          ? new T.Vector3(155 / 255, 165 / 255, 182 / 255)
-          : new T.Vector3(188 / 255, 216 / 255, 219 / 255),
+        value: mangrove
+          ? new T.Vector3(197 / 255, 222 / 255, 213 / 255)
+          : haunted
+            ? new T.Vector3(155 / 255, 165 / 255, 182 / 255)
+            : new T.Vector3(188 / 255, 216 / 255, 219 / 255),
       },
     }),
-    [depth, wide, holeRadius, haunted],
+    [depth, wide, holeRadius, haunted, mangrove],
   )
   const geo = useMemo(
     () =>
       new T.PlaneGeometry(
-        holeRadius || haunted ? 9000 : wide ? 2400 : 1000,
-        holeRadius || haunted ? 9000 : wide ? 2400 : 1000,
+        holeRadius || haunted || mangrove ? 9000 : wide ? 2400 : 1000,
+        holeRadius || haunted || mangrove ? 9000 : wide ? 2400 : 1000,
         144,
         144,
       ).rotateX(-Math.PI / 2),
-    [wide, holeRadius, haunted],
+    [wide, holeRadius, haunted, mangrove],
   )
   useFrame((state, dt) => {
     // R3F may reconcile the uniforms object when the default camera changes.

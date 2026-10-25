@@ -111,6 +111,7 @@ export default function App() {
   const config = islands[activeIsland]
   const { island, places } = config
   const isWater = activeIsland === 'water-7'
+  const isSabaody = activeIsland === 'sabaody'
   const isThriller = activeIsland === 'thriller-bark'
   const isEnies = activeIsland === 'enies-lobby'
   const savedScroll = useRef<Record<string, number>>({})
@@ -317,7 +318,7 @@ export default function App() {
     <IslandContext.Provider value={config}>
       <div
         ref={root}
-        className={`app ${isWater ? 'is-water7' : ''} ${isEnies ? 'is-enies' : ''} ${isThriller ? 'is-thriller' : ''} ${departed ? 'has-departed' : ''} ${selected !== null ? 'is-exploring' : ''} ${reduced ? 'reduced-motion' : ''}`}
+        className={`app ${isWater ? 'is-water7' : ''} ${isEnies ? 'is-enies' : ''} ${isThriller ? 'is-thriller' : ''} ${isSabaody ? 'is-sabaody' : ''} ${departed ? 'has-departed' : ''} ${selected !== null ? 'is-exploring' : ''} ${reduced ? 'reduced-motion' : ''}`}
       >
         <div inert={worldOpen || !ready} aria-hidden={worldOpen || undefined}>
           <a className="skip-link" href="#landmarks">
@@ -420,7 +421,9 @@ export default function App() {
                 </section>
                 <div className="travel-caption">
                   <span className="eyebrow">
-                    {isWater || isEnies || isThriller ? config.region : 'THE DESERT KINGDOM'}
+                    {isWater || isEnies || isThriller || isSabaody
+                      ? config.region
+                      : 'THE DESERT KINGDOM'}
                   </span>
                   <p>Every place holds a story.</p>
                   <span className="mono">Choose a landmark to look closer.</span>
@@ -450,24 +453,29 @@ export default function App() {
                 >
                   {/^\d/.test(island.incidents[selected].episodes) ? 'EPISODE ' : ''}
                   {island.incidents[selected].episodes}
-                  <span>{isWater ? 'Official story reference' : 'Official episode notes'} ↗</span>
+                  <span>
+                    {isWater || isSabaody ? 'Story reference' : 'Official episode notes'} ↗
+                  </span>
                 </a>
                 <div className="story-actions">
-                  {!isEnies && !isThriller && (isWater ? selected === 4 : selected === 0) && (
-                    <button
-                      className={`rain-story ${rain ? 'active' : ''}`}
-                      onClick={() => setRain((v) => !v)}
-                    >
-                      <Icon name={rain ? 'sun' : 'rain'} />
-                      {isWater
-                        ? rain
-                          ? 'Calm the sea'
-                          : 'Aqua Laguna'
-                        : rain
-                          ? 'Return to the desert sun'
-                          : 'Let the rain return'}
-                    </button>
-                  )}
+                  {!isEnies &&
+                    !isThriller &&
+                    !isSabaody &&
+                    (isWater ? selected === 4 : selected === 0) && (
+                      <button
+                        className={`rain-story ${rain ? 'active' : ''}`}
+                        onClick={() => setRain((v) => !v)}
+                      >
+                        <Icon name={rain ? 'sun' : 'rain'} />
+                        {isWater
+                          ? rain
+                            ? 'Calm the sea'
+                            : 'Aqua Laguna'
+                          : rain
+                            ? 'Return to the desert sun'
+                            : 'Let the rain return'}
+                      </button>
+                    )}
                   <button
                     className="next-story"
                     onClick={() => onSelect((selected + 1) % places.length)}
@@ -500,14 +508,14 @@ export default function App() {
                   onClick={() => setRain((v) => !v)}
                   aria-pressed={rain}
                 >
-                  <Icon name={isThriller ? 'compass' : rain ? 'rain' : 'sun'} />
+                  <Icon name={isThriller || isSabaody ? 'compass' : rain ? 'rain' : 'sun'} />
                   <span>{config.weather[rain ? 1 : 0]}</span>
                 </button>
               )}
               <button className="merry-departure" onClick={openWorld}>
                 <Icon name="map" />
                 <span>
-                  {isWater || isEnies || isThriller
+                  {isWater || isEnies || isThriller || isSabaody
                     ? 'Return to the world chart'
                     : 'Set sail on the Going Merry'}
                   <small>OPEN THE WORLD MAP</small>
@@ -619,7 +627,7 @@ export default function App() {
                 <p>
                   An independent fan-made world atlas inspired by Eiichiro Oda’s One Piece. The
                   chart spans all four seas and the New World through Elbaph. Explore Alabasta,
-                  Water 7, Enies Lobby and Thriller Bark in interactive 3D.
+                  Water 7, Enies Lobby, Thriller Bark and Sabaody in interactive 3D.
                 </p>
                 <p>
                   The architecture is an original 3D interpretation based on anime references. The
@@ -629,7 +637,8 @@ export default function App() {
                   Lobby reconstructs the intact rescue-era architecture; the Merry appears at the
                   escape viewpoint as a remembered event. Thriller Bark preserves an intact
                   arrival-era ship, with four interpreted room cutaways and later events recalled in
-                  stories. Distances are compressed for this atlas.
+                  stories. Sabaody depicts the intact first-arrival groves, with later reunion
+                  events recalled in text. Distances are compressed for this atlas.
                 </p>
                 <p>
                   Story summaries link to official episode notes and location references. One Piece
@@ -644,13 +653,15 @@ export default function App() {
                 <div className="credits">
                   <a
                     href={
-                      isThriller
-                        ? 'https://one-piece.com/story/thriller_bark/index.html'
-                        : isEnies
-                          ? 'https://one-piece.com/story/enies_lobby/index.html'
-                          : isWater
-                            ? 'https://one-piece.com/story/water_seven/index.html'
-                            : 'https://one-piece.com/anime/126/index.html'
+                      isSabaody
+                        ? 'https://one-piece.com/story/sabaody/index.html'
+                        : isThriller
+                          ? 'https://one-piece.com/story/thriller_bark/index.html'
+                          : isEnies
+                            ? 'https://one-piece.com/story/enies_lobby/index.html'
+                            : isWater
+                              ? 'https://one-piece.com/story/water_seven/index.html'
+                              : 'https://one-piece.com/anime/126/index.html'
                     }
                     target="_blank"
                     rel="noreferrer"

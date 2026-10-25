@@ -15,6 +15,7 @@ const sceneByPlace: Partial<Record<string, IslandId>> = {
   'water-seven': 'water-7',
   'enies-lobby': 'enies-lobby',
   thriller: 'thriller-bark',
+  sabaody: 'sabaody',
 }
 
 type View = { x: number; y: number; scale: number }

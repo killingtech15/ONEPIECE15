@@ -1,3 +1,5 @@
+import Sabaody, { SabaodyCamera } from './SabaodyScene'
+import sabaodyLayout from './sabaody-layout.json' with { type: 'json' }
 import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import {
@@ -349,13 +351,15 @@ function Markers({ markerLayer }: Pick<Props, 'markerLayer'>) {
   const points = useMemo(
     () => [
       ...island.incidents.map(({ localPosition: p }) => new T.Vector3(p.x, p.y + 1.4, p.z)),
-      island.id === 'thriller-bark'
-        ? new T.Vector3(...thrillerLayout.sunny).add(new T.Vector3(0, 15, 0))
-        : island.id === 'enies-lobby'
-          ? new T.Vector3(...eniesLayout.merry).add(new T.Vector3(0, 2, 0))
-          : island.id === 'water-7'
-            ? new T.Vector3(-83, 2, 94)
-            : new T.Vector3(16, 1.6, 31),
+      island.id === 'sabaody'
+        ? new T.Vector3(...sabaodyLayout.sunny).add(new T.Vector3(0, 15, 0))
+        : island.id === 'thriller-bark'
+          ? new T.Vector3(...thrillerLayout.sunny).add(new T.Vector3(0, 15, 0))
+          : island.id === 'enies-lobby'
+            ? new T.Vector3(...eniesLayout.merry).add(new T.Vector3(0, 2, 0))
+            : island.id === 'water-7'
+              ? new T.Vector3(-83, 2, 94)
+              : new T.Vector3(16, 1.6, 31),
     ],
     [],
   )
@@ -407,7 +411,7 @@ export function MarkerButtons({
         style={island.id === 'enies-lobby' && selected !== 13 ? { display: 'none' } : undefined}
         onClick={onWorldMap}
         aria-label={
-          island.id === 'thriller-bark'
+          island.id === 'thriller-bark' || island.id === 'sabaody'
             ? 'Board the Thousand Sunny and open the world map'
             : island.id === 'water-7'
               ? 'Return to the world map'
@@ -416,7 +420,7 @@ export function MarkerButtons({
       >
         <span className="marker-number">⚓</span>
         <span className="marker-label">
-          {island.id === 'thriller-bark'
+          {island.id === 'thriller-bark' || island.id === 'sabaody'
             ? 'Thousand Sunny'
             : island.id === 'water-7'
               ? 'World chart'
@@ -764,25 +768,30 @@ export default function Scene(props: Props) {
   const { island } = useIsland()
   const water = island.id === 'water-7'
   const thriller = island.id === 'thriller-bark'
+  const sabaody = island.id === 'sabaody'
   const enies = island.id === 'enies-lobby'
   const { selected, hover, reduced, rain, onReady, quality } = props
   const sunlight = useRef<T.DirectionalLight>(null!)
   return (
     <Selection>
-      <color attach="background" args={[thriller ? '#9ba5b6' : '#bcd8db']} />
+      <color attach="background" args={[sabaody ? '#c5ded5' : thriller ? '#9ba5b6' : '#bcd8db']} />
       <fog
         attach="fog"
         args={
-          thriller
-            ? ['#9ba5b6', rain ? 1600 : 900, 3500]
-            : enies
-              ? ['#bcd8db', 4000, 8500]
-              : water
-                ? ['#bcd8db', 650, 1400]
-                : ['#bcd8db', 145, 300]
+          sabaody
+            ? ['#c5ded5', 1800, 6500]
+            : thriller
+              ? ['#9ba5b6', rain ? 1600 : 900, 3500]
+              : enies
+                ? ['#bcd8db', 4000, 8500]
+                : water
+                  ? ['#bcd8db', 650, 1400]
+                  : ['#bcd8db', 145, 300]
         }
       />
-      {thriller ? (
+      {sabaody ? (
+        <SabaodyCamera selected={selected} reduced={reduced} />
+      ) : thriller ? (
         <ThrillerCamera selected={selected} reduced={reduced} />
       ) : enies ? (
         <EniesCamera selected={selected} reduced={reduced} />
@@ -796,7 +805,9 @@ export default function Scene(props: Props) {
         environmentIntensity={0.5}
         environmentRotation={[0, 1, 0]}
       />
-      {thriller ? (
+      {sabaody ? (
+        <Sabaody selected={selected} reduced={reduced} quiet={rain} onReady={onReady} />
+      ) : thriller ? (
         <ThrillerBark selected={selected} reduced={reduced} clearer={rain} onReady={onReady} />
       ) : water ? (
         <Water7 onReady={onReady} reduced={reduced} rain={rain} />
@@ -805,16 +816,17 @@ export default function Scene(props: Props) {
       )}
       <Ocean
         reduced={reduced}
-        rain={thriller ? false : rain}
+        rain={thriller || sabaody ? false : rain}
         haunted={thriller}
-        depthKey={thriller ? selected : null}
-        wide={water || enies || thriller}
+        mangrove={sabaody}
+        depthKey={thriller || sabaody ? selected : null}
+        wide={water || enies || thriller || sabaody}
         holeRadius={enies ? eniesLayout.chasmRadius : 0}
       />
       {enies && <EniesAtmosphere reduced={reduced} />}
       {selected === null && <ArcTitle reduced={reduced} />}
       <Markers {...props} />
-      {!water && !enies && !thriller && (
+      {!water && !enies && !thriller && !sabaody && (
         <>
           <PalaceFlags active={hover === 0 || selected === 0} reduced={reduced} />
           <Falcon active={hover === 1 || selected === 1} reduced={reduced} />
@@ -842,8 +854,8 @@ export default function Scene(props: Props) {
           <Ship active={false} reduced={reduced} onWorldMap={props.onWorldMap} />
         </group>
       )}
-      <Rain rain={rain && !thriller} reduced={reduced} />
-      {!thriller && <LogPose reduced={reduced} quality={quality} />}
+      <Rain rain={rain && !thriller && !sabaody} reduced={reduced} />
+      {!thriller && !sabaody && <LogPose reduced={reduced} quality={quality} />}
       {quality && <Effects reduced={reduced} quality={quality} light={sunlight} />}
     </Selection>
   )

@@ -1,3 +1,4 @@
+import { sabaodyIsland, sabaodyPlaces } from './sabaody'
 import { createContext, useContext } from 'react'
 import { island, places } from './world'
 import { water7Island, water7Places } from './water7'
@@ -5,6 +6,19 @@ import { thrillerIsland, thrillerPlaces } from './thriller'
 import { eniesIsland, eniesPlaces } from './enies'
 
 export const islands = {
+  sabaody: {
+    island: sabaodyIsland,
+    places: sabaodyPlaces,
+    title: 'SABAODY',
+    region: 'THE MANGROVE ARCHIPELAGO',
+    subtitle: 'Where the light learns to float.',
+    description:
+      'Follow the root bridges, wander beneath the giant trees, and find a world reflected in a thousand bubbles.',
+    action: 'Enter the groves',
+    chapter: '05',
+    weather: ['Drifting bubbles', 'Quiet canopy'],
+    landmarkHint: 'Sixteen landmarks. Seventy-nine groves. One crossing to the New World.',
+  },
   'thriller-bark': {
     island: thrillerIsland,
     places: thrillerPlaces,
