@@ -1,5 +1,42 @@
 import { test, expect } from '@playwright/test'
 
+test('phone atlas keeps all 3D touch controls separate', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 740 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/')
+  await expect(page.locator('.loading')).toBeHidden()
+  const boxes = await page
+    .locator('.chart-place.current')
+    .evaluateAll((es) =>
+      es.map((e) => ({
+        name: e.getAttribute('aria-label'),
+        ...e.getBoundingClientRect().toJSON(),
+      })),
+    )
+  for (let i = 0; i < boxes.length; i++) {
+    expect(boxes[i].width).toBeGreaterThanOrEqual(44)
+    for (let j = i + 1; j < boxes.length; j++) {
+      const a = boxes[i],
+        b = boxes[j]
+      expect(
+        a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top,
+        `${a.name} overlaps ${b.name}`,
+      ).toBe(true)
+    }
+  }
+  await page.screenshot({ path: 'artifacts/atlas-phone-spaced-pins.png' })
+  await page.getByRole('button', { name: 'View Impel Down', exact: true }).click()
+  await expect(page.locator('.loading')).toBeHidden({ timeout: 45000 })
+  await expect(
+    page.getByRole('combobox', { name: 'Choose Impel Down landmark or level' }),
+  ).toBeVisible()
+  await page.getByRole('button', { name: 'The atlas', exact: true }).click()
+  await expect(page.locator('.loading')).toBeHidden()
+  await page.getByRole('button', { name: 'View Marineford', exact: true }).click()
+  await expect(page.locator('.loading')).toBeHidden({ timeout: 45000 })
+  await expect(page.locator('#island-title')).toHaveText('Marineford')
+})
+
 test('map first, direct Alabasta entry and repeat transitions', async ({ page }) => {
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))

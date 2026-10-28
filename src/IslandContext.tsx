@@ -1,3 +1,6 @@
+import { impelIsland, impelPlaces } from './impel-down'
+import { marinefordIsland, marinefordPlaces } from './marineford'
+import { amazonIsland, amazonPlaces } from './amazon-lily'
 import { sabaodyIsland, sabaodyPlaces } from './sabaody'
 import { createContext, useContext } from 'react'
 import { island, places } from './world'
@@ -6,6 +9,45 @@ import { thrillerIsland, thrillerPlaces } from './thriller'
 import { eniesIsland, eniesPlaces } from './enies'
 
 export const islands = {
+  marineford: {
+    island: marinefordIsland,
+    places: marinefordPlaces,
+    title: 'MARINEFORD',
+    region: 'THE MARINE HEADQUARTERS',
+    subtitle: 'The stillness before the storm.',
+    description:
+      'Cross the crescent bay, walk the empty plaza, and look toward the fortress where the world will change.',
+    action: 'Enter the harbor',
+    chapter: '08',
+    weather: ['Harbor breeze', 'Still harbor'],
+    landmarkHint: 'Fourteen landmarks. The original headquarters before the war.',
+  },
+  'impel-down': {
+    island: impelIsland,
+    places: impelPlaces,
+    title: 'IMPEL DOWN',
+    region: 'THE GREAT UNDERWATER PRISON',
+    subtitle: 'Below the sea, beyond hope.',
+    description:
+      'Cross the fortress, descend through six levels, and find a hidden refuge inside the walls.',
+    action: 'Enter the prison',
+    chapter: '07',
+    weather: ['Prison atmosphere', 'Quiet prison'],
+    landmarkHint: 'Fourteen views. Six levels and a secret between them.',
+  },
+  'amazon-lily': {
+    island: amazonIsland,
+    places: amazonPlaces,
+    title: 'AMAZON LILY',
+    region: 'THE KUJA HOMELAND',
+    subtitle: 'A hidden valley beneath nine snakes.',
+    description:
+      'Pass the quiet shore, look beyond the mountain, and discover the red roofs of the Kuja kingdom.',
+    action: 'Enter the valley',
+    chapter: '06',
+    weather: ['Calm Belt', 'Still waters'],
+    landmarkHint: 'Twelve landmarks. From the serpent crown to the hidden valley.',
+  },
   sabaody: {
     island: sabaodyIsland,
     places: sabaodyPlaces,

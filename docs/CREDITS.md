@@ -105,3 +105,21 @@ Short original stories reference the [official arc summary](https://one-piece.co
 Original compressed geometry depicts the intact first-arrival groves, with later separation and reunion recalled in short stories. The [research plan](SABAODY-PLAN.md#reference-inspection) identifies inspected grove, bar, auction and park images and their hosts. Reference images and extracted assets are not bundled. Secondary architecture, distances and room footprints are interpretations; lettering uses the Helvetiker license listed above.
 
 Stories refer to the [official arc summary](https://one-piece.com/story/sabaody/index.html), [official episode listing](https://one-piece.com/anime/index.html?category=sabaodyarchipelago&page=1&sort=asc), [auction episode 394](https://one-piece.com/anime/394/index.html) and [departure episode 522](https://one-piece.com/anime/522/index.html). The [secondary geography reference](https://onepiece.fandom.com/wiki/Sabaody_Archipelago) supplied grove numbering. See [implementation notes](SABAODY-IMPLEMENTATION.md) for scope and measurements.
+
+
+## Amazon Lily
+
+Original compressed first-visit geometry includes the hollow mountain, serpent crown, Kuja town, palace, arena and Perfume Yuda. The ?? inscription and sail emblem are original vector geometry. No reference images, extracted models or character assets are bundled.
+
+The [research plan](AMAZON-LILY-PLAN.md) links the inspected anime panoramas, palace and ship profile. [Implementation notes](AMAZON-LILY-IMPLEMENTATION.md) identify additional episode frames, interpretation boundaries and remaining reference gaps. Stories link to official episode pages and the [official Amazon Lily summary](https://one-piece.com/story/amazon_lily/index.html).
+
+## Impel Down
+
+Original compressed infiltration-era architecture includes a sea fortress, six prison floors, the Newkama pocket and one Marine vessel. Connecting passages and room footprints are interpretations. Reference images, extracted models and character assets are not bundled. The [implementation notes](IMPEL-DOWN-IMPLEMENTATION.md#reference-record-and-interpretation-limits) list inspected floor stills; the [plan](IMPEL-DOWN-PLAN.md) lists the entrance, depth schematic and refuge panel. Short original summaries reference official episodes and the [Impel Down arc overview](https://one-piece.com/story/impel_down/index.html). Lettering uses the Helvetiker license listed above.
+
+
+## Marineford
+
+Original compressed prewar geometry includes the crescent, original headquarters, four pinnacles, town streets, empty execution scaffold and an interpreted Marine fleet. Distances, hidden connections and rear elevations are authored. No extracted models or reference images are shipped. Marine gulls and 海軍 relief use original vector strokes; Latin plaque lettering uses the Helvetiker license above.
+
+The [research plan](MARINEFORD-PLAN.md) links the inspected island overview, frontal headquarters and episode 459 architectural stills. Additional views show the execution stairs and gold/purple Admirals' chairs. Short original narrative summaries reference official episodes [459](https://one-piece.com/anime/459/index.html) and [461](https://one-piece.com/anime/461/index.html). Later battle states remain stories rather than permanent geometry. See [implementation notes](MARINEFORD-IMPLEMENTATION.md) for delivered scope and measurements.

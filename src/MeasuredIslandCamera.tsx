@@ -7,6 +7,8 @@ import { travel } from './world'
 export type CameraLayout = {
   overviewTarget: number[]
   overviewRadius: number
+  travelClearance?: number
+  travelCorridorZ?: number
   journey: { eye: number[]; look: number[] }[]
   landmarks: { target: number[]; offset: number[]; phoneOffset?: number[]; radius: number }[]
 }
@@ -23,7 +25,7 @@ export function MeasuredIslandCamera({
   const camera = useRef<T.PerspectiveCamera>(null!)
   const { size } = useThree()
   const pose = useRef({ x: 510, y: 370, z: 690, lx: 0, ly: 55, lz: -65, sx: 0, sy: 0 })
-  const animation = useRef<gsap.core.Tween | null>(null)
+  const animation = useRef<gsap.core.Animation | null>(null)
   const measured = useRef({ left: 0, top: 0, width: 1, height: 1 })
   const curves = useMemo(
     () => ({
@@ -52,6 +54,7 @@ export function MeasuredIslandCamera({
       const story = document.querySelector('.story')?.getBoundingClientRect()
       const intro = document.querySelector('.intro')?.getBoundingClientRect()
       const controls = document.querySelector('.scene-controls')?.getBoundingClientRect()
+      const dock = document.querySelector('.island-dock')?.getBoundingClientRect()
       const left = phone
         ? 14
         : selected !== null
@@ -62,7 +65,7 @@ export function MeasuredIslandCamera({
         ? selected !== null
           ? (story?.top ?? size.height) - 12
           : (controls?.top ?? size.height) - 12
-        : size.height - 70
+        : (dock?.top ?? size.height - 70) - 12
       measured.current = {
         left,
         top,
@@ -80,7 +83,7 @@ export function MeasuredIslandCamera({
             .normalize()
             .multiplyScalar(d)
         animation.current?.kill()
-        animation.current = gsap.to(pose.current, {
+        const destination = {
           x: p.target[0] + offset.x,
           y: p.target[1] + offset.y,
           z: p.target[2] + offset.z,
@@ -89,14 +92,48 @@ export function MeasuredIslandCamera({
           lz: p.target[2],
           sx: (r.left + r.width / 2) / size.width - 0.5,
           sy: 0.5 - (r.top + r.height / 2) / size.height,
-          duration: reduced ? 0 : 1.25,
+        }
+        if (layout.travelCorridorZ && !reduced) {
+          const safeZ = Math.max(layout.travelCorridorZ, pose.current.z, destination.z)
+          animation.current = gsap
+            .timeline()
+            .to(pose.current, { z: safeZ, duration: 0.3, ease: 'power2.inOut' })
+            .to(pose.current, { ...destination, z: safeZ, duration: 0.7, ease: 'power2.inOut' })
+            .to(pose.current, { z: destination.z, duration: 0.4, ease: 'power2.inOut' })
+        } else if (layout.travelClearance && !reduced) {
+          // Enclosing terrain: rise above the crown before crossing the rim.
+          const safeY = Math.max(layout.travelClearance, pose.current.y, destination.y)
+          animation.current = gsap
+            .timeline()
+            .to(pose.current, { y: safeY, duration: 0.35, ease: 'power2.inOut' })
+            .to(pose.current, { ...destination, y: safeY, duration: 0.75, ease: 'power2.inOut' })
+            .to(pose.current, { y: destination.y, duration: 0.45, ease: 'power2.inOut' })
+        } else
+          animation.current = gsap.to(pose.current, {
+            ...destination,
+            duration: reduced ? 0 : 1.25,
+            ease: 'power2.inOut',
+          })
+      } else if (layout.travelCorridorZ && !reduced) {
+        animation.current?.kill()
+        animation.current = gsap.to(pose.current, {
+          z: Math.max(layout.travelCorridorZ, pose.current.z),
+          duration: 0.35,
+          ease: 'power2.inOut',
+        })
+      } else if (layout.travelClearance && !reduced) {
+        const dest = curves.eye.getPoint(T.MathUtils.clamp(travel.progress, 0, 1))
+        animation.current?.kill()
+        animation.current = gsap.to(pose.current, {
+          y: Math.max(layout.travelClearance, pose.current.y, dest.y),
+          duration: 0.45,
           ease: 'power2.inOut',
         })
       }
     }
     measure()
     const observer = new ResizeObserver(measure)
-    for (const selector of ['.story', '.intro', '.scene-controls']) {
+    for (const selector of ['.story', '.intro', '.scene-controls', '.island-dock']) {
       const e = document.querySelector(selector)
       if (e) observer.observe(e)
     }
@@ -104,9 +141,9 @@ export function MeasuredIslandCamera({
       observer.disconnect()
       animation.current?.kill()
     }
-  }, [selected, reduced, size.width, size.height])
+  }, [selected, reduced, size.width, size.height, layout, curves])
   useFrame((_, dt) => {
-    if (selected === null) {
+    if (selected === null && !animation.current?.isActive()) {
       const t = T.MathUtils.clamp(travel.progress, 0, 1)
       curves.eye.getPoint(t, eye)
       curves.look.getPoint(t, look)

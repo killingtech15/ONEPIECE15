@@ -1,3 +1,9 @@
+import Marineford, { MarinefordCamera } from './MarinefordScene'
+import marinefordLayout from './marineford-layout.json' with { type: 'json' }
+import ImpelDown, { ImpelCamera } from './ImpelDownScene'
+import impelLayout from './impel-down-layout.json' with { type: 'json' }
+import AmazonLily, { AmazonCamera } from './AmazonLilyScene'
+import amazonLayout from './amazon-lily-layout.json' with { type: 'json' }
 import Sabaody, { SabaodyCamera } from './SabaodyScene'
 import sabaodyLayout from './sabaody-layout.json' with { type: 'json' }
 import { useEffect, useMemo, useRef } from 'react'
@@ -323,7 +329,7 @@ function ArcTitle({ reduced }: { reduced: boolean }) {
         fontSize={
           title === 'THRILLER BARK'
             ? Math.min(size.height < 440 && size.width > 760 ? 32 : 48, size.width * 0.068)
-            : title === 'ENIES LOBBY'
+            : title === 'ENIES LOBBY' || title === 'IMPEL DOWN' || title === 'MARINEFORD'
               ? Math.min(size.height < 440 && size.width > 760 ? 40 : 64, size.width * 0.085)
               : Math.min(80, Math.max(46, size.width * 0.058))
         }
@@ -346,34 +352,51 @@ function Markers({ markerLayer }: Pick<Props, 'markerLayer'>) {
   const buttons = useMemo(
     () =>
       markerLayer ? Array.from(markerLayer.querySelectorAll<HTMLButtonElement>('.map-marker')) : [],
-    [markerLayer],
+    [markerLayer, island.id],
   )
   const points = useMemo(
     () => [
       ...island.incidents.map(({ localPosition: p }) => new T.Vector3(p.x, p.y + 1.4, p.z)),
-      island.id === 'sabaody'
-        ? new T.Vector3(...sabaodyLayout.sunny).add(new T.Vector3(0, 15, 0))
-        : island.id === 'thriller-bark'
-          ? new T.Vector3(...thrillerLayout.sunny).add(new T.Vector3(0, 15, 0))
-          : island.id === 'enies-lobby'
-            ? new T.Vector3(...eniesLayout.merry).add(new T.Vector3(0, 2, 0))
-            : island.id === 'water-7'
-              ? new T.Vector3(-83, 2, 94)
-              : new T.Vector3(16, 1.6, 31),
+      island.id === 'marineford'
+        ? new T.Vector3(...marinefordLayout.ship).add(new T.Vector3(0, 40, 0))
+        : island.id === 'impel-down'
+          ? new T.Vector3(...impelLayout.ship).add(new T.Vector3(0, 30, 0))
+          : island.id === 'amazon-lily'
+            ? new T.Vector3(...amazonLayout.ship).add(new T.Vector3(0, 25, 0))
+            : island.id === 'sabaody'
+              ? new T.Vector3(...sabaodyLayout.sunny).add(new T.Vector3(0, 15, 0))
+              : island.id === 'thriller-bark'
+                ? new T.Vector3(...thrillerLayout.sunny).add(new T.Vector3(0, 15, 0))
+                : island.id === 'enies-lobby'
+                  ? new T.Vector3(...eniesLayout.merry).add(new T.Vector3(0, 2, 0))
+                  : island.id === 'water-7'
+                    ? new T.Vector3(-83, 2, 94)
+                    : new T.Vector3(16, 1.6, 31),
     ],
-    [],
+    [island],
   )
   const projected = useMemo(() => new T.Vector3(), [])
   useFrame(({ camera, size }) => {
     points.forEach((point, i) => {
       const button = buttons[i]
       if (!button) return
+      // The surface has no underground pins. The cutaway reveals each floor.
+      const surface = travel.progress < 0.25
+      const hiddenFloor =
+        island.id === 'impel-down' &&
+        (surface ? ![0, 1, 13, 14].includes(i) : [0, 1, 13, 14].includes(i))
       projected.copy(point).project(camera)
       const x = ((projected.x + 1) * size.width) / 2
       const y = ((1 - projected.y) * size.height) / 2
       button.style.transform = `translate3d(${x}px,${y}px,0) translate(-50%,-100%)`
       button.style.visibility =
-        projected.z < -1 || projected.z > 1 || x < 0 || x > size.width || y < 0 || y > size.height
+        hiddenFloor ||
+        projected.z < -1 ||
+        projected.z > 1 ||
+        x < 24 ||
+        x > size.width - 24 ||
+        y < 100 ||
+        y > size.height - 110
           ? 'hidden'
           : 'visible'
     })
@@ -411,20 +434,28 @@ export function MarkerButtons({
         style={island.id === 'enies-lobby' && selected !== 13 ? { display: 'none' } : undefined}
         onClick={onWorldMap}
         aria-label={
-          island.id === 'thriller-bark' || island.id === 'sabaody'
-            ? 'Board the Thousand Sunny and open the world map'
-            : island.id === 'water-7'
-              ? 'Return to the world map'
-              : 'Board the Going Merry and open the world map'
+          island.id === 'impel-down' || island.id === 'marineford'
+            ? 'Return to the world map'
+            : island.id === 'amazon-lily'
+              ? 'Board Perfume Yuda and open the world map'
+              : island.id === 'thriller-bark' || island.id === 'sabaody'
+                ? 'Board the Thousand Sunny and open the world map'
+                : island.id === 'water-7'
+                  ? 'Return to the world map'
+                  : 'Board the Going Merry and open the world map'
         }
       >
         <span className="marker-number">⚓</span>
         <span className="marker-label">
-          {island.id === 'thriller-bark' || island.id === 'sabaody'
-            ? 'Thousand Sunny'
-            : island.id === 'water-7'
-              ? 'World chart'
-              : 'Going Merry'}{' '}
+          {island.id === 'impel-down' || island.id === 'marineford'
+            ? 'World chart'
+            : island.id === 'amazon-lily'
+              ? 'Perfume Yuda'
+              : island.id === 'thriller-bark' || island.id === 'sabaody'
+                ? 'Thousand Sunny'
+                : island.id === 'water-7'
+                  ? 'World chart'
+                  : 'Going Merry'}{' '}
           <small>OPEN WORLD MAP ↗</small>
         </span>
       </button>
@@ -769,27 +800,55 @@ export default function Scene(props: Props) {
   const water = island.id === 'water-7'
   const thriller = island.id === 'thriller-bark'
   const sabaody = island.id === 'sabaody'
+  const marine = island.id === 'marineford'
+  const impel = island.id === 'impel-down'
+  const amazon = island.id === 'amazon-lily'
   const enies = island.id === 'enies-lobby'
   const { selected, hover, reduced, rain, onReady, quality } = props
   const sunlight = useRef<T.DirectionalLight>(null!)
   return (
     <Selection>
-      <color attach="background" args={[sabaody ? '#c5ded5' : thriller ? '#9ba5b6' : '#bcd8db']} />
+      <color
+        attach="background"
+        args={[
+          impel
+            ? '#b7c9ce'
+            : amazon
+              ? '#c8ded7'
+              : sabaody
+                ? '#c5ded5'
+                : thriller
+                  ? '#9ba5b6'
+                  : '#bcd8db',
+        ]}
+      />
       <fog
         attach="fog"
         args={
-          sabaody
-            ? ['#c5ded5', 1800, 6500]
-            : thriller
-              ? ['#9ba5b6', rain ? 1600 : 900, 3500]
-              : enies
-                ? ['#bcd8db', 4000, 8500]
-                : water
-                  ? ['#bcd8db', 650, 1400]
-                  : ['#bcd8db', 145, 300]
+          marine
+            ? ['#bcd8db', 2400, 8500]
+            : impel
+              ? ['#b7c9ce', 3000, 8500]
+              : amazon
+                ? ['#c8ded7', 1800, 6500]
+                : sabaody
+                  ? ['#c5ded5', 1800, 6500]
+                  : thriller
+                    ? ['#9ba5b6', rain ? 1600 : 900, 3500]
+                    : enies
+                      ? ['#bcd8db', 4000, 8500]
+                      : water
+                        ? ['#bcd8db', 650, 1400]
+                        : ['#bcd8db', 145, 300]
         }
       />
-      {sabaody ? (
+      {marine ? (
+        <MarinefordCamera selected={selected} reduced={reduced} />
+      ) : impel ? (
+        <ImpelCamera selected={selected} reduced={reduced} />
+      ) : amazon ? (
+        <AmazonCamera selected={selected} reduced={reduced} />
+      ) : sabaody ? (
         <SabaodyCamera selected={selected} reduced={reduced} />
       ) : thriller ? (
         <ThrillerCamera selected={selected} reduced={reduced} />
@@ -805,7 +864,13 @@ export default function Scene(props: Props) {
         environmentIntensity={0.5}
         environmentRotation={[0, 1, 0]}
       />
-      {sabaody ? (
+      {marine ? (
+        <Marineford reduced={reduced} quiet={rain} onReady={onReady} />
+      ) : impel ? (
+        <ImpelDown selected={selected} reduced={reduced} quiet={rain} onReady={onReady} />
+      ) : amazon ? (
+        <AmazonLily reduced={reduced} quiet={rain} onReady={onReady} />
+      ) : sabaody ? (
         <Sabaody selected={selected} reduced={reduced} quiet={rain} onReady={onReady} />
       ) : thriller ? (
         <ThrillerBark selected={selected} reduced={reduced} clearer={rain} onReady={onReady} />
@@ -814,19 +879,22 @@ export default function Scene(props: Props) {
       ) : (
         <Island onReady={onReady} />
       )}
-      <Ocean
-        reduced={reduced}
-        rain={thriller || sabaody ? false : rain}
-        haunted={thriller}
-        mangrove={sabaody}
-        depthKey={thriller || sabaody ? selected : null}
-        wide={water || enies || thriller || sabaody}
-        holeRadius={enies ? eniesLayout.chasmRadius : 0}
-      />
+      {!impel && (
+        <Ocean
+          reduced={reduced}
+          rain={thriller || sabaody || amazon || marine ? false : rain}
+          haunted={thriller}
+          mangrove={sabaody}
+          calm={amazon || (marine && rain)}
+          depthKey={thriller || sabaody ? selected : null}
+          wide={water || enies || thriller || sabaody || amazon || marine}
+          holeRadius={enies ? eniesLayout.chasmRadius : 0}
+        />
+      )}
       {enies && <EniesAtmosphere reduced={reduced} />}
       {selected === null && <ArcTitle reduced={reduced} />}
       <Markers {...props} />
-      {!water && !enies && !thriller && !sabaody && (
+      {!water && !enies && !thriller && !sabaody && !amazon && !impel && !marine && (
         <>
           <PalaceFlags active={hover === 0 || selected === 0} reduced={reduced} />
           <Falcon active={hover === 1 || selected === 1} reduced={reduced} />
@@ -854,8 +922,13 @@ export default function Scene(props: Props) {
           <Ship active={false} reduced={reduced} onWorldMap={props.onWorldMap} />
         </group>
       )}
-      <Rain rain={rain && !thriller && !sabaody} reduced={reduced} />
-      {!thriller && !sabaody && <LogPose reduced={reduced} quality={quality} />}
+      <Rain
+        rain={rain && !thriller && !sabaody && !amazon && !impel && !marine}
+        reduced={reduced}
+      />
+      {!thriller && !sabaody && !amazon && !impel && !marine && (
+        <LogPose reduced={reduced} quality={quality} />
+      )}
       {quality && <Effects reduced={reduced} quality={quality} light={sunlight} />}
     </Selection>
   )

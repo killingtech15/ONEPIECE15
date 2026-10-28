@@ -16,6 +16,9 @@ const sceneByPlace: Partial<Record<string, IslandId>> = {
   'enies-lobby': 'enies-lobby',
   thriller: 'thriller-bark',
   sabaody: 'sabaody',
+  amazon: 'amazon-lily',
+  impel: 'impel-down',
+  marineford: 'marineford',
 }
 
 type View = { x: number; y: number; scale: number }
@@ -213,6 +216,32 @@ export default function WorldMap({
       )
     : []
   const mappedPlaces = filteredPlaces.filter((place) => place.position !== 'unknown')
+  // Spread nearby 3D controls in screen pixels, retaining leaders to exact map anchors.
+  // Otherwise Impel Down and Marineford occupy the same touch target at phone fit zoom.
+  const placed: { x: number; y: number }[] = []
+  const pinOffsets = new Map<string, { x: number; y: number }>()
+  for (const place of mappedPlaces.filter((p) => sceneByPlace[p.id])) {
+    const x = place.x * view.current.scale,
+      y = place.y * view.current.scale
+    let offset = { x: 0, y: 0 }
+    search: for (let ring = 0; ring <= 8; ring++) {
+      const count = ring === 0 ? 1 : 16
+      for (let i = 0; i < count; i++) {
+        const angle = Math.PI + (i * Math.PI * 2) / count
+        const candidate = { x: Math.cos(angle) * ring * 48, y: Math.sin(angle) * ring * 48 }
+        if (
+          placed.every(
+            (p) => Math.abs(p.x - x - candidate.x) >= 48 || Math.abs(p.y - y - candidate.y) >= 48,
+          )
+        ) {
+          offset = candidate
+          break search
+        }
+      }
+    }
+    placed.push({ x: x + offset.x, y: y + offset.y })
+    pinOffsets.set(place.id, offset)
+  }
   return (
     <dialog
       ref={modal}
@@ -519,28 +548,45 @@ export default function WorldMap({
                 </>
               )}
             </svg>
-            {mappedPlaces.map((p) => (
-              <button
-                key={p.id}
-                className={`chart-place ${selected.id === p.id ? 'selected' : ''} ${sceneByPlace[p.id] ? 'current' : ''}`}
-                style={{ left: `${(p.x / WIDTH) * 100}%`, top: `${(p.y / HEIGHT) * 100}%` }}
-                onClick={() => {
-                  if (sceneByPlace[p.id]) onEnterIsland(sceneByPlace[p.id]!)
-                  else {
-                    setSelected(p)
-                    setBrowseOpen(true)
-                  }
-                }}
-                aria-label={`View ${p.name}`}
-                aria-pressed={selected.id === p.id}
-              >
-                <span className="chart-pin" />
-                <span className="chart-place-label">
-                  {p.name}
-                  {sceneByPlace[p.id] && <small>EXPLORE IN 3D</small>}
-                </span>
-              </button>
-            ))}
+            {mappedPlaces.map((p) => {
+              const offset = pinOffsets.get(p.id) ?? { x: 0, y: 0 }
+              const displacement = Math.hypot(offset.x, offset.y)
+              return (
+                <button
+                  key={p.id}
+                  className={`chart-place ${selected.id === p.id ? 'selected' : ''} ${sceneByPlace[p.id] ? 'current' : ''}`}
+                  style={{
+                    left: `calc(${(p.x / WIDTH) * 100}% + ${offset.x}px)`,
+                    top: `calc(${(p.y / HEIGHT) * 100}% + ${offset.y}px)`,
+                  }}
+                  onClick={() => {
+                    if (sceneByPlace[p.id]) onEnterIsland(sceneByPlace[p.id]!)
+                    else {
+                      setSelected(p)
+                      setBrowseOpen(true)
+                    }
+                  }}
+                  aria-label={`View ${p.name}`}
+                  aria-pressed={selected.id === p.id}
+                >
+                  {displacement > 0 && (
+                    <span
+                      aria-hidden="true"
+                      className="chart-marker-leader"
+                      style={{
+                        width: displacement,
+                        transform: `rotate(${Math.atan2(-offset.y, -offset.x)}rad)`,
+                      }}
+                    />
+                  )}
+                  <span className="chart-pin" />
+                  <span className="chart-place-label">
+                    {p.name}
+                    {sceneByPlace[p.id] && <small>EXPLORE IN 3D</small>}
+                  </span>
+                </button>
+              )
+            })}
           </div>
           <div className="chart-tools" onPointerDown={(e) => e.stopPropagation()}>
             <button onClick={() => zoomAt(1.25)} aria-label="Zoom in">

@@ -111,6 +111,9 @@ export default function App() {
   const config = islands[activeIsland]
   const { island, places } = config
   const isWater = activeIsland === 'water-7'
+  const isMarine = activeIsland === 'marineford'
+  const isImpel = activeIsland === 'impel-down'
+  const isAmazon = activeIsland === 'amazon-lily'
   const isSabaody = activeIsland === 'sabaody'
   const isThriller = activeIsland === 'thriller-bark'
   const isEnies = activeIsland === 'enies-lobby'
@@ -318,7 +321,7 @@ export default function App() {
     <IslandContext.Provider value={config}>
       <div
         ref={root}
-        className={`app ${isWater ? 'is-water7' : ''} ${isEnies ? 'is-enies' : ''} ${isThriller ? 'is-thriller' : ''} ${isSabaody ? 'is-sabaody' : ''} ${departed ? 'has-departed' : ''} ${selected !== null ? 'is-exploring' : ''} ${reduced ? 'reduced-motion' : ''}`}
+        className={`app ${isWater ? 'is-water7' : ''} ${isEnies ? 'is-enies' : ''} ${isThriller ? 'is-thriller' : ''} ${isSabaody ? 'is-sabaody' : ''} ${isAmazon ? 'is-amazon' : ''} ${isImpel ? 'is-impel' : ''} ${isMarine ? 'is-marine' : ''} ${departed ? 'has-departed' : ''} ${selected !== null ? 'is-exploring' : ''} ${reduced ? 'reduced-motion' : ''}`}
       >
         <div inert={worldOpen || !ready} aria-hidden={worldOpen || undefined}>
           <a className="skip-link" href="#landmarks">
@@ -421,7 +424,13 @@ export default function App() {
                 </section>
                 <div className="travel-caption">
                   <span className="eyebrow">
-                    {isWater || isEnies || isThriller || isSabaody
+                    {isWater ||
+                    isEnies ||
+                    isThriller ||
+                    isSabaody ||
+                    isAmazon ||
+                    isImpel ||
+                    isMarine
                       ? config.region
                       : 'THE DESERT KINGDOM'}
                   </span>
@@ -454,13 +463,19 @@ export default function App() {
                   {/^\d/.test(island.incidents[selected].episodes) ? 'EPISODE ' : ''}
                   {island.incidents[selected].episodes}
                   <span>
-                    {isWater || isSabaody ? 'Story reference' : 'Official episode notes'} ↗
+                    {isWater || isSabaody || isAmazon || isImpel || isMarine
+                      ? 'Story reference'
+                      : 'Official episode notes'}{' '}
+                    ↗
                   </span>
                 </a>
                 <div className="story-actions">
                   {!isEnies &&
                     !isThriller &&
                     !isSabaody &&
+                    !isAmazon &&
+                    !isImpel &&
+                    !isMarine &&
                     (isWater ? selected === 4 : selected === 0) && (
                       <button
                         className={`rain-story ${rain ? 'active' : ''}`}
@@ -508,14 +523,22 @@ export default function App() {
                   onClick={() => setRain((v) => !v)}
                   aria-pressed={rain}
                 >
-                  <Icon name={isThriller || isSabaody ? 'compass' : rain ? 'rain' : 'sun'} />
+                  <Icon
+                    name={
+                      isThriller || isSabaody || isAmazon || isImpel || isMarine
+                        ? 'compass'
+                        : rain
+                          ? 'rain'
+                          : 'sun'
+                    }
+                  />
                   <span>{config.weather[rain ? 1 : 0]}</span>
                 </button>
               )}
               <button className="merry-departure" onClick={openWorld}>
                 <Icon name="map" />
                 <span>
-                  {isWater || isEnies || isThriller || isSabaody
+                  {isWater || isEnies || isThriller || isSabaody || isAmazon || isImpel || isMarine
                     ? 'Return to the world chart'
                     : 'Set sail on the Going Merry'}
                   <small>OPEN THE WORLD MAP</small>
@@ -531,7 +554,25 @@ export default function App() {
           <footer ref={dock} className="island-dock" id="landmarks" tabIndex={-1}>
             <div className="dock-heading">
               <span className="eyebrow">EXPLORE {config.title}</span>
-              <span>{config.landmarkHint}</span>
+              {isImpel ? (
+                <select
+                  className="level-picker"
+                  aria-label="Choose Impel Down landmark or level"
+                  value={selected ?? ''}
+                  onChange={(e) => {
+                    if (e.target.value !== '') onSelect(Number(e.target.value))
+                  }}
+                >
+                  <option value="">Choose a prison level</option>
+                  {places.map((place, i) => (
+                    <option key={place.name} value={i}>
+                      {String(i + 1).padStart(2, '0')} · {place.name}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <span>{config.landmarkHint}</span>
+              )}
             </div>
             <nav className="landmark-list" aria-label="Island landmarks" data-lenis-prevent>
               {places.map((place, i) => (
@@ -627,7 +668,8 @@ export default function App() {
                 <p>
                   An independent fan-made world atlas inspired by Eiichiro Oda’s One Piece. The
                   chart spans all four seas and the New World through Elbaph. Explore Alabasta,
-                  Water 7, Enies Lobby, Thriller Bark and Sabaody in interactive 3D.
+                  Water 7, Enies Lobby, Thriller Bark, Sabaody, Amazon Lily, Impel Down and
+                  Marineford in interactive 3D.
                 </p>
                 <p>
                   The architecture is an original 3D interpretation based on anime references. The
@@ -638,7 +680,12 @@ export default function App() {
                   escape viewpoint as a remembered event. Thriller Bark preserves an intact
                   arrival-era ship, with four interpreted room cutaways and later events recalled in
                   stories. Sabaody depicts the intact first-arrival groves, with later reunion
-                  events recalled in text. Distances are compressed for this atlas.
+                  events recalled in text. Amazon Lily depicts the Kuja kingdom during Luffy�s first
+                  visit. Impel Down is an architectural cutaway of the intact infiltration-era
+                  prison; its connecting rooms are interpreted and later escape events are recalled
+                  in text. Marineford depicts the intact original headquarters before the war, with
+                  open water in the bay and no combat crowds. Distances are compressed for this
+                  atlas.
                 </p>
                 <p>
                   Story summaries link to official episode notes and location references. One Piece
@@ -653,15 +700,21 @@ export default function App() {
                 <div className="credits">
                   <a
                     href={
-                      isSabaody
-                        ? 'https://one-piece.com/story/sabaody/index.html'
-                        : isThriller
-                          ? 'https://one-piece.com/story/thriller_bark/index.html'
-                          : isEnies
-                            ? 'https://one-piece.com/story/enies_lobby/index.html'
-                            : isWater
-                              ? 'https://one-piece.com/story/water_seven/index.html'
-                              : 'https://one-piece.com/anime/126/index.html'
+                      isMarine
+                        ? 'https://one-piece.com/story/marineford/index.html'
+                        : isImpel
+                          ? 'https://one-piece.com/story/impel_down/index.html'
+                          : isAmazon
+                            ? 'https://one-piece.com/story/amazon_lily/index.html'
+                            : isSabaody
+                              ? 'https://one-piece.com/story/sabaody/index.html'
+                              : isThriller
+                                ? 'https://one-piece.com/story/thriller_bark/index.html'
+                                : isEnies
+                                  ? 'https://one-piece.com/story/enies_lobby/index.html'
+                                  : isWater
+                                    ? 'https://one-piece.com/story/water_seven/index.html'
+                                    : 'https://one-piece.com/anime/126/index.html'
                     }
                     target="_blank"
                     rel="noreferrer"
